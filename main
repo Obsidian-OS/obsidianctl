@@ -1,0 +1,54 @@
+
+def main():
+    if os.geteuid() != 0:
+        print("This script must be run as root.", file=sys.stderr)
+        sys.exit(1)
+
+    parser = argparse.ArgumentParser(
+        description="Install and manage A/B slot system with shared partitions on ObsidianOS.",
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    parser_status = subparsers.add_parser(
+        "status", help="Show current active slot and system info."
+    )
+    parser_status.set_defaults(func=handle_status)
+
+    parser_install = subparsers.add_parser(
+        "install", help="Partition device and install system image."
+    )
+    parser_install.add_argument(
+        "device", help="The target block device (e.g., /dev/sda)."
+    )
+    parser_install.add_argument("system_sfs", help="Path to the SquashFS system image.")
+    parser_install.set_defaults(func=handle_install)
+
+    parser_switch = subparsers.add_parser(
+        "switch", help="Switch active boot slot to 'a' or 'b'."
+    )
+    parser_switch.add_argument(
+        "slot", choices=["a", "b"], help="The slot to make active."
+    )
+    parser_switch.set_defaults(func=handle_switch)
+
+    parser_update = subparsers.add_parser(
+        "update", help="Update a slot with a new system image."
+    )
+    parser_update.add_argument(
+        "slot", choices=["a", "b"], help="The slot to update."
+    )
+    parser_update.add_argument(
+        "system_sfs", help="Path to the new SquashFS system image."
+    )
+    parser_update.set_defaults(func=handle_update)
+
+    if len(sys.argv) == 1:
+        parser.print_help(sys.stderr)
+        sys.exit(1)
+
+    args = parser.parse_args()
+    args.func(args)
+
+
+main()
