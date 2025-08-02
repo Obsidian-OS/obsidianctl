@@ -91,6 +91,16 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
         run_command(f"umount {esp_tmp_mount}", check=False)
         run_command(f"rmdir {esp_tmp_mount}", check=False)
 
+    print("Populating ESP_B with boot files from system image...")
+    esp_b_tmp_mount = "/mnt/obsidian_esp_b_tmp"
+    run_command(f"mkdir -p {esp_b_tmp_mount}")
+    try:
+        run_command(f"mount /dev/disk/by-label/ESP_B {esp_b_tmp_mount}")
+        run_command(f"rsync -aK --delete {mount_dir}/boot/ {esp_b_tmp_mount}/")
+    finally:
+        run_command(f"umount {esp_b_tmp_mount}", check=False)
+        run_command(f"rmdir {esp_b_tmp_mount}", check=False)
+
     print("Mounting shared partitions for potential chroot...")
     mount_commands = [
         f"mkdir -p {mount_dir}/boot",
