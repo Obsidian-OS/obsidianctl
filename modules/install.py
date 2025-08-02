@@ -1,4 +1,3 @@
-
 def handle_install(args):
     device = args.device
     system_sfs = args.system_sfs
@@ -72,7 +71,7 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
 
     print("Populating shared /etc and /var partitions...")
     for part_label in ["etc_ab", "var_ab"]:
-        fs_dir = part_label.split('_')[0]
+        fs_dir = part_label.split("_")[0]
         tmp_mount_dir = f"/mnt/tmp_{fs_dir}"
         run_command(f"mkdir -p {tmp_mount_dir}")
         try:
@@ -147,7 +146,9 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
         fstab_b_path = f"{mount_b_dir}/etc/fstab"
         if not os.path.exists(os.path.dirname(fstab_b_path)):
             run_command(f"mkdir -p {os.path.dirname(fstab_b_path)}")
-        fstab_content_b = fstab_content_a.replace("LABEL=root_a", "LABEL=root_b").replace("LABEL=ESP_A", "LABEL=ESP_B")
+        fstab_content_b = fstab_content_a.replace(
+            "LABEL=root_a", "LABEL=root_b"
+        ).replace("LABEL=ESP_A", "LABEL=ESP_B")
         with open(fstab_b_path, "w") as f:
             f.write(fstab_content_b)
     finally:
@@ -191,8 +192,8 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
         )
         sys.exit(1)
     efibootmgr_commands = [
-        f"efibootmgr --create --disk {device} --part 1 --label 'ObsidianOS (Slot A)' --loader '\vmlinuz-linux' --unicode 'root=PARTUUID={root_a_partuuid} rw initrd=\initramfs-linux.img'",
-        f"efibootmgr --create --disk {device} --part 2 --label 'ObsidianOS (Slot B)' --loader '\vmlinuz-linux' --unicode 'root=PARTUUID={root_b_partuuid} rw initrd=\initramfs-linux.img'",
+        f"efibootmgr --create --disk {device} --part 1 --label 'ObsidianOS (Slot A)' --loader '\\vmlinuz-linux' --unicode 'root=PARTUUID={root_a_partuuid} rw initrd=\\initramfs-linux.img'",
+        f"efibootmgr --create --disk {device} --part 2 --label 'ObsidianOS (Slot B)' --loader '\\vmlinuz-linux' --unicode 'root=PARTUUID={root_b_partuuid} rw initrd=\\initramfs-linux.img'",
     ]
     for cmd in efibootmgr_commands:
         run_command(cmd)

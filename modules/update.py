@@ -1,4 +1,3 @@
-
 def handle_update(args):
     slot = args.slot
     system_sfs = args.system_sfs
@@ -7,6 +6,7 @@ def handle_update(args):
         sys.exit(1)
 
     target_label = f"root_{slot}"
+    esp_label = f"ESP_{slot}"
     print(f"Updating slot '{slot}' with image '{system_sfs}'...")
     print(f"WARNING: THIS WILL ERASE ALL OF SLOT {slot.upper()}. INCLUDING /root.")
     confirm = input("Continue? (y/N): ")
@@ -23,15 +23,13 @@ def handle_update(args):
         print(f"Extracting system from {system_sfs} to slot '{slot}'...")
         run_command(f"unsquashfs -f -d {mount_dir} -no-xattrs {system_sfs}")
         print(f"Generating fstab for slot '{slot}'...")
-        fstab_content = f'''
-fstab_content = f'''
+        fstab_content = f"""
 LABEL={target_label}  /      ext4  defaults,noatime 0 1
 LABEL={esp_label}     /boot  vfat  defaults,noatime 0 2
 LABEL=etc_ab  /etc   ext4  defaults,noatime 0 2
 LABEL=var_ab  /var   ext4  defaults,noatime 0 2
 LABEL=home_ab /home  ext4  defaults,noatime 0 2
-'''
-'''
+"""
         fstab_path = f"{mount_dir}/etc/fstab"
         if not os.path.exists(os.path.dirname(fstab_path)):
             run_command(f"mkdir -p {os.path.dirname(fstab_path)}")
@@ -63,3 +61,4 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
 
     print(f"Update for slot '{slot}' complete!")
     print("You may need to switch to this slot and reboot to use the updated system.")
+
