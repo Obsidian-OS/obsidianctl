@@ -199,7 +199,7 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
         sys.exit(1)
 
     loader_conf = """
-timeout 1
+timeout 0
 default obsidian-a.conf
 """
     entry_a_conf = f"""
