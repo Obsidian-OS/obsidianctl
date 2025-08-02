@@ -136,13 +136,13 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     print("Unmounting slot 'a' partitions before copy...")
     run_command(f"umount -R {mount_dir}")
     print("Copying system to slot 'b'...")
-    run_command(f"dd if={part2} of={part3} bs=16M status=progress")
-    run_command(f"e2label {part3} root_b")
+    run_command(f"dd if={part3} of={part4} bs=16M status=progress")
+    run_command(f"e2label {part4} root_b")
     print("Correcting fstab for slot 'b'...")
     mount_b_dir = "/mnt/obsidian_install_b"
     run_command(f"mkdir -p {mount_b_dir}")
     try:
-        run_command(f"mount {part3} {mount_b_dir}")
+        run_command(f"mount {part4} {mount_b_dir}")
         fstab_b_path = f"{mount_b_dir}/etc/fstab"
         if not os.path.exists(os.path.dirname(fstab_b_path)):
             run_command(f"mkdir -p {os.path.dirname(fstab_b_path)}")
