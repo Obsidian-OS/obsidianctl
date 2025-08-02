@@ -61,4 +61,3 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
 
     print(f"Update for slot '{slot}' complete!")
     print("You may need to switch to this slot and reboot to use the updated system.")
-

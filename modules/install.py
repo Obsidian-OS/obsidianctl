@@ -155,26 +155,12 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
         run_command(f"umount {mount_b_dir}", check=False)
         run_command(f"rm -r {mount_b_dir}")
 
-    print("Setting up bootloader entries...")
-    esp_mount_dir = "/mnt/obsidian_esp_check"
+    print("Installing systemd-boot...")
+    esp_mount_dir = "/mnt/obsidian_esp_a"
     run_command(f"mkdir -p {esp_mount_dir}")
     try:
         run_command(f"mount {part1} {esp_mount_dir}")
-        run_command(f"rsync -aK --delete {mount_dir} {esp_mount_dir}/")
-        run_command(f"umount {esp_mount_dir}", check=False)
-        run_command(f"mount {part1} {esp_mount_dir}")
-        kernel_path = f"{esp_mount_dir}/vmlinuz-linux"
-        initramfs_path = f"{esp_mount_dir}/initramfs-linux.img"
-        if not os.path.exists(kernel_path) or not os.path.exists(initramfs_path):
-            print(
-                f"Error: vmlinuz-linux or initramfs-linux.img not found on the ESP partition ({part1}).",
-                file=sys.stderr,
-            )
-            print(
-                "This likely means the system image used for installation did not contain a kernel in /boot.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
+        run_command(f"bootctl --esp-path={esp_mount_dir} install")
     finally:
         run_command(f"umount {esp_mount_dir}", check=False)
         run_command(f"rm -r {esp_mount_dir}", check=False)
@@ -191,12 +177,38 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
             file=sys.stderr,
         )
         sys.exit(1)
-    efibootmgr_commands = [
-        f"efibootmgr --create --disk {device} --part 1 --label 'ObsidianOS (Slot A)' --loader '\\vmlinuz-linux' --unicode 'root=PARTUUID={root_a_partuuid} rw initrd=\\initramfs-linux.img'",
-        f"efibootmgr --create --disk {device} --part 2 --label 'ObsidianOS (Slot B)' --loader '\\vmlinuz-linux' --unicode 'root=PARTUUID={root_b_partuuid} rw initrd=\\initramfs-linux.img'",
-    ]
-    for cmd in efibootmgr_commands:
-        run_command(cmd)
+
+    loader_conf = """
+timeout 1
+default obsidian-a.conf
+"""
+    entry_a_conf = f"""
+title ObsidianOS (Slot A)
+linux /vmlinuz-linux
+initrd /initramfs-linux.img
+options root=PARTUUID={root_a_partuuid} rw
+"""
+    entry_b_conf = f"""
+title ObsidianOS (Slot B)
+linux /vmlinuz-linux
+initrd /initramfs-linux.img
+options root=PARTUUID={root_b_partuuid} rw
+"""
+
+    esp_mount_dir = "/mnt/obsidian_esp_a"
+    run_command(f"mkdir -p {esp_mount_dir}")
+    try:
+        run_command(f"mount {part1} {esp_mount_dir}")
+        run_command(f"mkdir -p {esp_mount_dir}/loader/entries")
+        with open(f"{esp_mount_dir}/loader/loader.conf", "w") as f:
+            f.write(loader_conf)
+        with open(f"{esp_mount_dir}/loader/entries/obsidian-a.conf", "w") as f:
+            f.write(entry_a_conf)
+        with open(f"{esp_mount_dir}/loader/entries/obsidian-b.conf", "w") as f:
+            f.write(entry_b_conf)
+    finally:
+        run_command(f"umount {esp_mount_dir}", check=False)
+        run_command(f"rm -r {esp_mount_dir}", check=False)
     run_command(f"rm -r {mount_dir}", check=False)
     print("\nInstallation complete!")
     print("Default boot order will attempt Slot A, then Slot B.")

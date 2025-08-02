@@ -1,41 +1,69 @@
-
 def handle_switch(args):
     slot = args.slot
     print(f"Switching active boot slot to '{slot}'...")
-
-    boot_entries_raw = run_command("efibootmgr", capture_output=True, text=True).stdout
-    boot_order_match = re.search(r"^BootOrder: (.*)$", boot_entries_raw, re.MULTILINE)
-    if not boot_order_match:
-        print("Could not determine boot order from efibootmgr.", file=sys.stderr)
-        sys.exit(1)
-    current_order = boot_order_match.group(1).split(",")
-
-    slot_a_match = re.search(
-        r"^Boot([0-9A-F]{4})\*?.*ObsidianOS \(Slot A\)", boot_entries_raw, re.MULTILINE
-    )
-    slot_b_match = re.search(
-        r"^Boot([0-9A-F]{4})\*?.*ObsidianOS \(Slot B\)", boot_entries_raw, re.MULTILINE
-    )
-    slot_a_entry = slot_a_match.group(1) if slot_a_match else None
-    slot_b_entry = slot_b_match.group(1) if slot_b_match else None
-    if not slot_a_entry or not slot_b_entry:
+    esp_a_path = "/dev/disk/by-label/ESP_A"
+    esp_b_path = "/dev/disk/by-label/ESP_B"
+    if not os.path.exists(esp_a_path) or not os.path.exists(esp_b_path):
         print(
-            "Could not find boot entries for Slot A and Slot B. Was the system installed with obsidianctl?",
+            "ESP partitions not found. Was the system installed with obsidianctl?",
             file=sys.stderr,
         )
         sys.exit(1)
-    new_order = list(current_order)
-    target_entry = slot_a_entry if slot == "a" else slot_b_entry
-    other_entry = slot_b_entry if slot == "a" else slot_a_entry
-    if target_entry in new_order:
-        new_order.remove(target_entry)
-    if other_entry in new_order:
-        new_order.remove(other_entry)
 
-    new_order.insert(0, target_entry)
-    new_order.insert(1, other_entry)
-    final_order_str = ",".join(new_order)
-    run_command(f"efibootmgr --bootorder {final_order_str}")
-    print("Boot order updated.")
-    run_command(f"efibootmgr -n {target_entry}")
-    print(f"Next boot set to Slot {slot.upper()}. The change is persistent.")
+    esp_mount_dir = "/mnt/obsidian_esp_tmp"
+    run_command(f"mkdir -p {esp_mount_dir}")
+    try:
+        run_command(f"mount {esp_a_path} {esp_mount_dir}")
+        run_command(
+            f"bootctl --esp-path={esp_mount_dir} set-default obsidian-{slot}.conf"
+        )
+        print(f"Default boot entry set to obsidian-{slot}.conf on ESP_A.")
+    finally:
+        run_command(f"umount {esp_mount_dir}", check=False)
+
+    try:
+        run_command(f"mount {esp_b_path} {esp_mount_dir}")
+        run_command(
+            f"bootctl --esp-path={esp_mount_dir} set-default obsidian-{slot}.conf"
+        )
+        print(f"Default boot entry set to obsidian-{slot}.conf on ESP_B.")
+    finally:
+        run_command(f"umount {esp_mount_dir}", check=False)
+        run_command(f"rm -r {esp_mount_dir}", check=False)
+
+    print(f"Active boot slot switched to '{slot}'. The change is persistent.")
+    
+def handle_switchonce(args):
+    slot = args.slot
+    print(f"Switching active boot slot to '{slot}' temporarily...")
+    esp_a_path = "/dev/disk/by-label/ESP_A"
+    esp_b_path = "/dev/disk/by-label/ESP_B"
+    if not os.path.exists(esp_a_path) or not os.path.exists(esp_b_path):
+        print(
+            "ESP partitions not found. Was the system installed with obsidianctl?",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
+    esp_mount_dir = "/mnt/obsidian_esp_tmp"
+    run_command(f"mkdir -p {esp_mount_dir}")
+    try:
+        run_command(f"mount {esp_a_path} {esp_mount_dir}")
+        run_command(
+            f"bootctl --esp-path={esp_mount_dir} set-oneshot obsidian-{slot}.conf"
+        )
+        print(f"Default boot entry set to obsidian-{slot}.conf on ESP_A.")
+    finally:
+        run_command(f"umount {esp_mount_dir}", check=False)
+
+    try:
+        run_command(f"mount {esp_b_path} {esp_mount_dir}")
+        run_command(
+            f"bootctl --esp-path={esp_mount_dir} set-oneshot obsidian-{slot}.conf"
+        )
+        print(f"Default boot entry set to obsidian-{slot}.conf on ESP_B.")
+    finally:
+        run_command(f"umount {esp_mount_dir}", check=False)
+        run_command(f"rm -r {esp_mount_dir}", check=False)
+
+    print(f"Active boot slot switched to '{slot}'. The change is temporarily.")

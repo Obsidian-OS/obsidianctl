@@ -1,34 +1,40 @@
-
 def handle_status(args):
-    """Displays system status in a neofetch-like format."""
-
     logo = [
-"   ooooooooooo   ",
-" oo:::::::::::oo ",
-"o:::::::::::::::o",
-"o:::::ooooo:::::o",
-"o::::o     o::::o",
-"o::::o     o::::o",
-"o::::o     o::::o",
-"o::::o     o::::o",
-"o:::::ooooo:::::o",
-"o:::::::::::::::o",
-" oo:::::::::::oo ",
-"   ooooooooooo   "
-]
+        "   ooooooooooo   ",
+        " oo:::::::::::oo ",
+        "o:::::::::::::::o",
+        "o:::::ooooo:::::o",
+        "o::::o     o::::o",
+        "o::::o     o::::o",
+        "o::::o     o::::o",
+        "o::::o     o::::o",
+        "o:::::ooooo:::::o",
+        "o:::::::::::::::o",
+        " oo:::::::::::oo ",
+        "   ooooooooooo   ",
+    ]
 
     info = {}
-    info["Active Slot"] = get_current_slot()
-    info["Kernel"] = run_command("uname -r", capture_output=True, text=True).stdout.strip()
-    info["Uptime"] = run_command("uptime -p", capture_output=True, text=True).stdout.strip().replace("up ", "")
+    info["Active Slot"] = get_current_slot_systemd()
+    info["Current Slot"] = get_current_slot()
+    info["Kernel"] = run_command(
+        "uname -r", capture_output=True, text=True
+    ).stdout.strip()
+    info["Uptime"] = (
+        run_command("uptime -p", capture_output=True, text=True)
+        .stdout.strip()
+        .replace("up ", "")
+    )
     try:
         with open("/etc/os-release") as f:
             os_release = dict(line.strip().split("=", 1) for line in f if "=" in line)
-        info["OS"] = os_release.get("PRETTY_NAME", "Linux").strip('"')
+        info["OS"] = os_release.get("PRETTY_NAME", "GNU/Linux").strip('"')
     except FileNotFoundError:
-        info["OS"] = "Linux"
+        info["OS"] = "GNU/Linux"
 
-    info["Hostname"] = run_command("hostnamectl hostname", capture_output=True, text=True).stdout.strip()
+    info["Hostname"] = run_command(
+        "hostnamectl hostname", capture_output=True, text=True
+    ).stdout.strip()
     cpu_info = run_command("lscpu", capture_output=True, text=True).stdout
     cpu_model_match = re.search(r"Model name:\s+(.*)", cpu_info)
     if cpu_model_match:
@@ -39,7 +45,6 @@ def handle_status(args):
     mem_parts = mem_line.split()
     if len(mem_parts) >= 3:
         info["Memory"] = f"{mem_parts[2]} / {mem_parts[1]}"
-
 
     max_logo_width = max(len(line) for line in logo)
     for i in range(max(len(logo), len(info))):
