@@ -155,15 +155,25 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
         run_command(f"umount {mount_b_dir}", check=False)
         run_command(f"rm -r {mount_b_dir}")
 
-    print("Installing systemd-boot...")
-    esp_mount_dir = "/mnt/obsidian_esp_a"
-    run_command(f"mkdir -p {esp_mount_dir}")
+    print("Installing systemd-boot to ESP_A...")
+    esp_a_mount_dir = "/mnt/obsidian_esp_a"
+    run_command(f"mkdir -p {esp_a_mount_dir}")
     try:
-        run_command(f"mount {part1} {esp_mount_dir}")
-        run_command(f"bootctl --esp-path={esp_mount_dir} install")
+        run_command(f"mount {part1} {esp_a_mount_dir}")
+        run_command(f"bootctl --esp-path={esp_a_mount_dir} install")
     finally:
-        run_command(f"umount {esp_mount_dir}", check=False)
-        run_command(f"rm -r {esp_mount_dir}", check=False)
+        run_command(f"umount {esp_a_mount_dir}", check=False)
+        run_command(f"rm -r {esp_a_mount_dir}", check=False)
+
+    print("Installing systemd-boot to ESP_B...")
+    esp_b_mount_dir = "/mnt/obsidian_esp_b"
+    run_command(f"mkdir -p {esp_b_mount_dir}")
+    try:
+        run_command(f"mount {part2} {esp_b_mount_dir}")
+        run_command(f"bootctl --esp-path={esp_b_mount_dir} install")
+    finally:
+        run_command(f"umount {esp_b_mount_dir}", check=False)
+        run_command(f"rm -r {esp_b_mount_dir}", check=False)
 
     root_a_partuuid = run_command(
         f"blkid -s PARTUUID -o value {part3}", capture_output=True, text=True
@@ -195,20 +205,36 @@ initrd /initramfs-linux.img
 options root=PARTUUID={root_b_partuuid} rw
 """
 
-    esp_mount_dir = "/mnt/obsidian_esp_a"
-    run_command(f"mkdir -p {esp_mount_dir}")
+    esp_a_config_mount_dir = "/mnt/obsidian_esp_a_config"
+    run_command(f"mkdir -p {esp_a_config_mount_dir}")
     try:
-        run_command(f"mount {part1} {esp_mount_dir}")
-        run_command(f"mkdir -p {esp_mount_dir}/loader/entries")
-        with open(f"{esp_mount_dir}/loader/loader.conf", "w") as f:
+        run_command(f"mount {part1} {esp_a_config_mount_dir}")
+        run_command(f"mkdir -p {esp_a_config_mount_dir}/loader/entries")
+        with open(f"{esp_a_config_mount_dir}/loader/loader.conf", "w") as f:
             f.write(loader_conf)
-        with open(f"{esp_mount_dir}/loader/entries/obsidian-a.conf", "w") as f:
+        with open(f"{esp_a_config_mount_dir}/loader/entries/obsidian-a.conf", "w") as f:
             f.write(entry_a_conf)
-        with open(f"{esp_mount_dir}/loader/entries/obsidian-b.conf", "w") as f:
+        with open(f"{esp_a_config_mount_dir}/loader/entries/obsidian-b.conf", "w") as f:
             f.write(entry_b_conf)
     finally:
-        run_command(f"umount {esp_mount_dir}", check=False)
-        run_command(f"rm -r {esp_mount_dir}", check=False)
+        run_command(f"umount {esp_a_config_mount_dir}", check=False)
+        run_command(f"rm -r {esp_a_config_mount_dir}", check=False)
+
+    print("Writing boot configuration to ESP_B...")
+    esp_b_config_mount_dir = "/mnt/obsidian_esp_b_config"
+    run_command(f"mkdir -p {esp_b_config_mount_dir}")
+    try:
+        run_command(f"mount {part2} {esp_b_config_mount_dir}")
+        run_command(f"mkdir -p {esp_b_config_mount_dir}/loader/entries")
+        with open(f"{esp_b_config_mount_dir}/loader/loader.conf", "w") as f:
+            f.write(loader_conf)
+        with open(f"{esp_b_config_mount_dir}/loader/entries/obsidian-a.conf", "w") as f:
+            f.write(entry_a_conf)
+        with open(f"{esp_b_config_mount_dir}/loader/entries/obsidian-b.conf", "w") as f:
+            f.write(entry_b_conf)
+    finally:
+        run_command(f"umount {esp_b_config_mount_dir}", check=False)
+        run_command(f"rm -r {esp_b_config_mount_dir}", check=False)
     run_command(f"rm -r {mount_dir}", check=False)
     print("\nInstallation complete!")
     print("Default boot order will attempt Slot A, then Slot B.")
