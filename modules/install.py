@@ -19,6 +19,7 @@ def handle_install(args):
     partition_table = """
 label: gpt
 ,512M,U,*
+,512M,U,*
 ,5G,L,*
 ,5G,L,*
 ,5G,L,*
@@ -29,23 +30,25 @@ label: gpt
     run_command("partprobe", check=False)
     print("Waiting for device partitions to settle...")
     run_command("udevadm settle")
-    part1, part2, part3, part4, part5, part6 = (
+    part1, part2, part3, part4, part5, part6, part7 = (
         _get_part_path(device, 1),
         _get_part_path(device, 2),
         _get_part_path(device, 3),
         _get_part_path(device, 4),
         _get_part_path(device, 5),
         _get_part_path(device, 6),
+        _get_part_path(device, 7),
     )
 
     print("Formatting partitions...")
     format_commands = [
-        f"mkfs.fat -F32 -n ESP {part1}",
-        f"mkfs.ext4 -F -L root_a {part2}",
-        f"mkfs.ext4 -F -L root_b {part3}",
-        f"mkfs.ext4 -F -L etc_ab {part4}",
-        f"mkfs.ext4 -F -L var_ab {part5}",
-        f"mkfs.ext4 -F -L home_ab {part6}",
+        f"mkfs.fat -F32 -n ESP_A {part1}",
+        f"mkfs.fat -F32 -n ESP_B {part2}",
+        f"mkfs.ext4 -F -L root_a {part3}",
+        f"mkfs.ext4 -F -L root_b {part4}",
+        f"mkfs.ext4 -F -L etc_ab {part5}",
+        f"mkfs.ext4 -F -L var_ab {part6}",
+        f"mkfs.ext4 -F -L home_ab {part7}",
     ]
     for cmd in format_commands:
         run_command(cmd)
@@ -59,7 +62,7 @@ label: gpt
     print("Generating fstab for slot 'a'...")
     fstab_content_a = """
 LABEL=root_a  /      ext4  defaults,noatime 0 1
-LABEL=ESP     /boot  vfat  defaults,noatime 0 2
+LABEL=ESP_A     /boot  vfat  defaults,noatime 0 2
 LABEL=etc_ab  /etc   ext4  defaults,noatime 0 2
 LABEL=var_ab  /var   ext4  defaults,noatime 0 2
 LABEL=home_ab /home  ext4  defaults,noatime 0 2
@@ -83,7 +86,7 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     esp_tmp_mount = "/mnt/obsidian_esp_tmp"
     run_command(f"mkdir -p {esp_tmp_mount}")
     try:
-        run_command(f"mount /dev/disk/by-label/ESP {esp_tmp_mount}")
+        run_command(f"mount /dev/disk/by-label/ESP_A {esp_tmp_mount}")
         run_command(f"rsync -aK --delete {mount_dir}/boot/ {esp_tmp_mount}/")
     finally:
         run_command(f"umount {esp_tmp_mount}", check=False)
@@ -95,7 +98,7 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
         f"mkdir -p {mount_dir}/etc",
         f"mkdir -p {mount_dir}/var",
         f"mkdir -p {mount_dir}/home",
-        f"mount /dev/disk/by-label/ESP {mount_dir}/boot",
+        f"mount /dev/disk/by-label/ESP_A {mount_dir}/boot",
         f"mount /dev/disk/by-label/etc_ab {mount_dir}/etc",
         f"mount /dev/disk/by-label/var_ab {mount_dir}/var",
         f"mount /dev/disk/by-label/home_ab {mount_dir}/home",
@@ -144,7 +147,7 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
         fstab_b_path = f"{mount_b_dir}/etc/fstab"
         if not os.path.exists(os.path.dirname(fstab_b_path)):
             run_command(f"mkdir -p {os.path.dirname(fstab_b_path)}")
-        fstab_content_b = fstab_content_a.replace("LABEL=root_a", "LABEL=root_b")
+        fstab_content_b = fstab_content_a.replace("LABEL=root_a", "LABEL=root_b").replace("LABEL=ESP_A", "LABEL=ESP_B")
         with open(fstab_b_path, "w") as f:
             f.write(fstab_content_b)
     finally:
@@ -156,6 +159,9 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     run_command(f"mkdir -p {esp_mount_dir}")
     try:
         run_command(f"mount {part1} {esp_mount_dir}")
+        run_command(f"rsync -aK --delete {mount_dir}/boot/ {esp_mount_dir}/")
+        run_command(f"umount {esp_mount_dir}", check=False)
+        run_command(f"mount {part2} {esp_mount_dir}")
         kernel_path = f"{esp_mount_dir}/vmlinuz-linux"
         initramfs_path = f"{esp_mount_dir}/initramfs-linux.img"
         if not os.path.exists(kernel_path) or not os.path.exists(initramfs_path):
@@ -173,10 +179,10 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
         run_command(f"rm -r {esp_mount_dir}", check=False)
 
     root_a_partuuid = run_command(
-        f"blkid -s PARTUUID -o value {part2}", capture_output=True, text=True
+        f"blkid -s PARTUUID -o value {part3}", capture_output=True, text=True
     ).stdout.strip()
     root_b_partuuid = run_command(
-        f"blkid -s PARTUUID -o value {part3}", capture_output=True, text=True
+        f"blkid -s PARTUUID -o value {part4}", capture_output=True, text=True
     ).stdout.strip()
     if not root_a_partuuid or not root_b_partuuid:
         print(
@@ -185,8 +191,8 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
         )
         sys.exit(1)
     efibootmgr_commands = [
-        f"efibootmgr --create --disk {device} --part 1 --label 'ObsidianOS (Slot A)' --loader '\\vmlinuz-linux' --unicode 'root=PARTUUID={root_a_partuuid} rw initrd=\\initramfs-linux.img'",
-        f"efibootmgr --create --disk {device} --part 1 --label 'ObsidianOS (Slot B)' --loader '\\vmlinuz-linux' --unicode 'root=PARTUUID={root_b_partuuid} rw initrd=\\initramfs-linux.img'",
+        f"efibootmgr --create --disk {device} --part 1 --label 'ObsidianOS (Slot A)' --loader '\vmlinuz-linux' --unicode 'root=PARTUUID={root_a_partuuid} rw initrd=\initramfs-linux.img'",
+        f"efibootmgr --create --disk {device} --part 2 --label 'ObsidianOS (Slot B)' --loader '\vmlinuz-linux' --unicode 'root=PARTUUID={root_b_partuuid} rw initrd=\initramfs-linux.img'",
     ]
     for cmd in efibootmgr_commands:
         run_command(cmd)

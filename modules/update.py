@@ -24,11 +24,13 @@ def handle_update(args):
         run_command(f"unsquashfs -f -d {mount_dir} -no-xattrs {system_sfs}")
         print(f"Generating fstab for slot '{slot}'...")
         fstab_content = f'''
+fstab_content = f'''
 LABEL={target_label}  /      ext4  defaults,noatime 0 1
-LABEL=ESP     /boot  vfat  defaults,noatime 0 2
+LABEL={esp_label}     /boot  vfat  defaults,noatime 0 2
 LABEL=etc_ab  /etc   ext4  defaults,noatime 0 2
 LABEL=var_ab  /var   ext4  defaults,noatime 0 2
 LABEL=home_ab /home  ext4  defaults,noatime 0 2
+'''
 '''
         fstab_path = f"{mount_dir}/etc/fstab"
         if not os.path.exists(os.path.dirname(fstab_path)):
@@ -43,6 +45,16 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
         run_command(f"cp {script_path} {obsidianctl_dest}")
         run_command(f"chmod +x {obsidianctl_dest}")
         run_command(f"cp /etc/os-release {mount_dir}/etc/os-release")
+
+        print(f"Populating ESP_{slot.upper()} with new boot files...")
+        esp_tmp_mount = "/mnt/obsidian_esp_tmp"
+        run_command(f"mkdir -p {esp_tmp_mount}")
+        try:
+            run_command(f"mount /dev/disk/by-label/ESP_{slot.upper()} {esp_tmp_mount}")
+            run_command(f"rsync -aK --delete {mount_dir}/boot/ {esp_tmp_mount}/")
+        finally:
+            run_command(f"umount {esp_tmp_mount}", check=False)
+            run_command(f"rmdir {esp_tmp_mount}", check=False)
 
     finally:
         print("Unmounting partition...")
