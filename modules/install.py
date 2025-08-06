@@ -69,8 +69,8 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     with open(f"{mount_dir}/etc/fstab", "w") as f:
         f.write(fstab_content_a.strip())
 
-    print("Populating shared /etc and /var partitions...")
-    for part_label in ["etc_ab", "var_ab"]:
+    print("Populating shared /etc, /var, and /home partitions...")
+    for part_label in ["etc_ab", "var_ab", "home_ab"]:
         fs_dir = part_label.split("_")[0]
         tmp_mount_dir = f"/mnt/tmp_{fs_dir}"
         run_command(f"mkdir -p {tmp_mount_dir}")
