@@ -1,17 +1,13 @@
 def handle_status(args):
     logo = [
-        "   ooooooooooo   ",
-        " oo:::::::::::oo ",
-        "o:::::::::::::::o",
-        "o:::::ooooo:::::o",
-        "o::::o     o::::o",
-        "o::::o     o::::o",
-        "o::::o     o::::o",
-        "o::::o     o::::o",
-        "o:::::ooooo:::::o",
-        "o:::::::::::::::o",
-        " oo:::::::::::oo ",
-        "   ooooooooooo   ",
+    "               \033[0;36m.        \033[0;37m",
+    "      \033[0;36m/\033[35m \\       \033[0;37m",
+    "     \033[0;36m/ \033[35m  \\      \033[1;37m",
+    "    \033[0;36m/^.\033[35m   \\     \033[1;37m",
+    "   \033[0;36m/  .\033[35m-.  \\    \033[1;37m",
+    "  \033[0;36m/  (\033[35m   ) _\\   \033[1;37m",
+    " \033[1;36m/ _.~\033[35m   ~._^\\  \033[0;37m",
+    "\033[1;36m/.^   \033[35m      ^.\\ \033[0;37m"
     ]
 
     info = {}
@@ -55,6 +51,6 @@ def handle_status(args):
         else:
             info_line = ""
 
-        print(f"\033[36m{logo_line}\033[0m  {info_line}")
+        print(f"{logo_line}  {info_line}")
     print("\n\033[1mPartition Information:\033[0m")
     run_command("lsblk -o NAME,LABEL,SIZE,MOUNTPOINT")
