@@ -1,4 +1,5 @@
 def handle_install(args):
+    checkroot()
     device = args.device
     system_sfs = args.system_sfs or '/etc/system.sfs'
     if not os.path.exists(device):

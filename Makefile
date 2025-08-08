@@ -17,3 +17,7 @@ build:
 
 clean:
 	rm -f obsidianctl
+install:
+	install -Dm 755 -v obsidianctl /usr/local/sbin
+uninstall:
+	rm -f /usr/local/sbin/obsidianctl

@@ -6,10 +6,6 @@ import shlex
 import re
 
 def main():
-    if os.geteuid() != 0:
-        print("This script must be run as root.", file=sys.stderr)
-        sys.exit(1)
-
     parser = argparse.ArgumentParser(
         description="Install and manage A/B slot system with shared partitions on ObsidianOS.",
         formatter_class=argparse.RawTextHelpFormatter,
