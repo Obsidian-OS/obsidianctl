@@ -40,10 +40,11 @@ The `obsidianctl` tool source code is modularized into several Python files and 
     make
     ```
     This will create a single executable file named `obsidianctl` in the current directory.
+3. (Optional) Run the `make install` command as root to install the merged executable. It will install to `/usr/local/sbin`.
 
 ## Usage
 
-You can run the `obsidianctl` script directly. Remember to run it with `sudo` as it requires root privileges.
+You can run the `obsidianctl` script directly. Remember to run it with `sudo` as all commands other than `obsidianctl status` require root privileges.
 
 ```bash
 sudo ./obsidianctl [command] [options]
@@ -53,10 +54,10 @@ sudo ./obsidianctl [command] [options]
 
 #### `status`
 
-Displays the currently active A/B slot and various system details.
+Displays the currently active A/B slot and various system details. This command does not require root.
 
 ```bash
-sudo ./obsidianctl status
+./obsidianctl status
 ```
 
 #### `install <device> <system_sfs>`
