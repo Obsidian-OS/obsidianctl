@@ -64,7 +64,7 @@ sudo ./obsidianctl status
 Partitions the specified device and installs the SquashFS system image. **WARNING: This will erase all data on the target device.**
 
 *   `<device>`: The target block device (e.g., `/dev/sda`).
-*   `<system_sfs>`: Path to the SquashFS system image file (e.g., `/path/to/archlinux.sfs`).
+*   `<system_sfs>`: Path to the SquashFS system image file (e.g., `/path/to/obsidianos.sfs`). Defaults to `/etc/system.sfs`
 
 ```bash
 sudo ./obsidianctl install /dev/sda /path/to/your_system.sfs

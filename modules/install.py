@@ -1,6 +1,6 @@
 def handle_install(args):
     device = args.device
-    system_sfs = args.system_sfs
+    system_sfs = args.system_sfs or '/etc/system.sfs'
     if not os.path.exists(device):
         print(f"Error: Device '{device}' does not exist.", file=sys.stderr)
         sys.exit(1)
