@@ -1,3 +1,8 @@
+def checkroot():
+    if os.geteuid() != 0:
+      print("This script must be run as root.", file=sys.stderr)
+      sys.exit(1)
+
 def run_command(command, **kwargs):
     kwargs.setdefault("text", True)
     check = kwargs.pop("check", True)

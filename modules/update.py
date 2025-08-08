@@ -1,4 +1,5 @@
 def handle_update(args):
+    checkroot()
     slot = args.slot
     system_sfs = args.system_sfs
     if not os.path.exists(system_sfs):

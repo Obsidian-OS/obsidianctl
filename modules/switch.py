@@ -1,4 +1,5 @@
 def handle_switch(args):
+    checkroot()
     slot = args.slot
     print(f"Switching active boot slot to '{slot}'...")
     esp_a_path = "/dev/disk/by-label/ESP_A"
@@ -34,6 +35,7 @@ def handle_switch(args):
     print(f"Active boot slot switched to '{slot}'. The change is persistent.")
     
 def handle_switchonce(args):
+    checkroot()
     slot = args.slot
     print(f"Switching active boot slot to '{slot}' temporarily...")
     esp_a_path = "/dev/disk/by-label/ESP_A"
