@@ -9,6 +9,16 @@
 *   **`switch`**: Change the active boot slot (A or B) for the next boot, persistently.
 *   **`update`**: Update a specific A/B slot with a new SquashFS system image.
 
+## Install (AUR)
+
+`obsidianctl` is in the AUR as [obsidianctl-git](https://aur.archlinux.org/packages/obsidianctl-git). You can install it as follows:
+
+```console
+$ paru -S obsidianctl-git
+```
+
+Or with your favorite [AUR helper](https://wiki.archlinux.org/title/AUR_helpers).
+
 ## Prerequisites
 
 `obsidianctl` requires root privileges to operate. It relies on several standard Linux utilities. Ensure the following commands are available on your system:
@@ -29,6 +39,7 @@
 *   `hostnamectl`
 *   `lscpu`
 *   `free`
+
 
 ## Building from Source
 
