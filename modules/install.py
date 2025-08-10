@@ -1,7 +1,25 @@
+def handle_mkobsidiansfs(args):
+    if shutil.which("mkobsidiansfs"):
+        os.system(f"mkobsidiansfs {args.system_sfs}")
+    else:
+        if shutil.which("git"):
+            os.system(f"git clone https://github.com/Obsidian-OS/mkobsidiansfs/ /tmp/mkobsidiansfs;chmod u+x /tmp/mkobsidiansfs/mkobsidiansfs;/tmp/mkobsidiansfs/mkobsidiansfs {args.system_sfs} tmp_system.sfs")
+        else:
+            print("No git or mkobsidiansfs found. Please install one of these to directly pass in an .mkobsfs.")
+            sys.exit(1)
+    args.system_sfs="tmp_system.sfs"
+    handle_install(args)
+    os.remove("tmp_system.sfs")
+    
 def handle_install(args):
     checkroot()
     device = args.device
     system_sfs = args.system_sfs or '/etc/system.sfs'
+    _, ext = os.path.splitext(system_sfs)
+    if ext==".mkobsfs":
+        handle_mkobsidiansfs(args)
+        sys.exit()
+    
     if not os.path.exists(device):
         print(f"Error: Device '{device}' does not exist.", file=sys.stderr)
         sys.exit(1)
