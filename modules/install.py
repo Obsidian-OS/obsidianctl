@@ -138,9 +138,12 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     script_path = os.path.realpath(sys.argv[0])
     os_release_path = "/etc/os-release"
     obsidianctl_dest = f"{mount_dir}/usr/bin/obsidianctl"
-    run_command(f"mkdir -p {mount_dir}/usr/bin")
-    run_command(f"cp {script_path} {obsidianctl_dest}")
-    run_command(f"chmod +x {obsidianctl_dest}")
+    if os.path.exists(f"{mount_dir}/obsidianctl-aur-installed"):
+        print("obsidianctl has been installed through the AUR. Skipping obsidianctl copy...")
+    else:
+        run_command(f"mkdir -p {mount_dir}/usr/bin")
+        run_command(f"cp {script_path} {obsidianctl_dest}")
+        run_command(f"chmod +x {obsidianctl_dest}")
     if os.path.exists(os_release_path):
         run_command(f"cp {os_release_path} {mount_dir}/etc/os-release")
     else:
