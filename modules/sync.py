@@ -1,5 +1,9 @@
+import sys
+import subprocess
+from .utils import check_dependencies, check_root, get_current_slot, run_command
+
 def handle_sync(args):
-    check_dependencies(["findfs", "blkid", "dd", "tune2fs", "sgdisk", "lsblk"])
+    check_dependencies(["findfs", "blkid", "dd", "tune2fs", "sgdisk", "lsblk", "e2label", "fatlabel"])
     checkroot()
     target_slot = args.slot
     current_slot = get_current_slot()
@@ -64,6 +68,8 @@ def handle_sync(args):
 
     print("Copying data from source root to target root. This may take a while...")
     run_command(f"dd if={source_root_dev} of={target_root_dev} bs=4M status=progress")
+    print(f"Setting label of {target_root_dev} to {target_root_label}")
+    run_command(f"e2label {target_root_dev} {target_root_label}")
     print("Restoring original filesystem identifier for the root partition...")
     run_command(f"tune2fs -U {target_root_fs_uuid} {target_root_dev}")
     print("Restoring original partition identifier for the root partition...")
@@ -76,6 +82,8 @@ def handle_sync(args):
     )
     print("Copying data from source ESP to target ESP...")
     run_command(f"dd if={source_esp_dev} of={target_esp_dev} bs=1M status=progress")
+    print(f"Setting label of {target_esp_dev} to {target_esp_label}")
+    run_command(f"fatlabel {target_esp_dev} {target_esp_label}")
     print("Restoring original partition identifier for the ESP...")
     target_esp_disk = run_command(
         f"lsblk -no pkname {target_esp_dev}", capture_output=True
