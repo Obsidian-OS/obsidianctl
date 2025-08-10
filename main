@@ -2,7 +2,6 @@ import os
 import sys
 import argparse
 import subprocess
-import shlex
 import re
 
 def main():
@@ -22,7 +21,7 @@ def main():
     parser_install.add_argument(
         "device", help="The target block device (e.g., /dev/sda)."
     )
-    parser_install.add_argument("system_sfs", help="Path to the SquashFS system image.")
+    parser_install.add_argument("system_sfs", help="Path to the SquashFS system image. If you pass in an .mkobsfs file, it will download and run mkobsidiansfs.")
     parser_install.set_defaults(func=handle_install)
     parser_switchonce = subparsers.add_parser(
       "switch-once", help="Switch active boot slot to 'a' or 'b' once only."
