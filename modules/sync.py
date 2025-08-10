@@ -8,14 +8,14 @@ def handle_sync(args):
 
     print(f"Current slot: {current_slot}")
     print(f"Target slot: {target_slot}")
-    source_root_label = f"ROOT_{current_slot.upper()}"
-    target_root_label = f"ROOT_{target_slot.upper()}"
+    source_root_label = f"root_{current_slot.lower()}"
+    target_root_label = f"root_{target_slot.lower()}"
     try:
         source_root_dev = run_command(
-            f"findfs PARTLABEL={source_root_label}", capture_output=True
+            f"findfs LABEL={source_root_label}", capture_output=True
         ).stdout.strip()
         target_root_dev = run_command(
-            f"findfs PARTLABEL={target_root_label}", capture_output=True
+            f"findfs LABEL={target_root_label}", capture_output=True
         ).stdout.strip()
     except subprocess.CalledProcessError:
         print(
@@ -48,10 +48,10 @@ def handle_sync(args):
     target_esp_label = f"ESP_{target_slot.upper()}"
     try:
         source_esp_dev = run_command(
-            f"findfs PARTLABEL={source_esp_label}", capture_output=True
+            f"findfs LABEL={source_esp_label}", capture_output=True
         ).stdout.strip()
         target_esp_dev = run_command(
-            f"findfs PARTLABEL={target_esp_label}", capture_output=True
+            f"findfs LABEL={target_esp_label}", capture_output=True
         ).stdout.strip()
     except subprocess.CalledProcessError:
         print(

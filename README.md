@@ -8,6 +8,7 @@
 *   **`install`**: Partition a target device and install a SquashFS system image onto both A and B slots, setting up shared `/etc`, `/var`, and `/home` partitions, and configuring UEFI boot entries.
 *   **`switch`**: Change the active boot slot (A or B) for the next boot, persistently.
 *   **`update`**: Update a specific A/B slot with a new SquashFS system image.
+*   **`sync`**: Clone the current slot's root and ESP partitions to the other slot using `dd`.
 
 ## Install (AUR)
 
@@ -103,6 +104,16 @@ Updates a specific A/B slot with a new SquashFS system image. **WARNING: This wi
 sudo ./obsidianctl update b /path/to/new_system_image.sfs
 ```
 
+#### `sync <slot>`
+
+Clones the currently running slot to the specified slot. This is a block-level copy using `dd`. It copies both the root and ESP partitions. **WARNING: This will erase all data on the specified slot.**
+
+*   `<slot>`: The slot to sync to (`a` or `b`).
+
+```bash
+sudo ./obsidianctl sync b
+```
+
 ## Modular Structure
 
 The `obsidianctl` project is organized into a `modules` directory and a main `obsidianctl` file.
@@ -112,6 +123,7 @@ The `obsidianctl` project is organized into a `modules` directory and a main `ob
 *   `modules/install.py`: Implements the `handle_install` command logic.
 *   `modules/switch.py`: Implements the `handle_switch` command logic.
 *   `modules/update.py`: Implements the `handle_update` command logic.
+*   `modules/sync.py`: Implements the `handle_sync` command logic.
 *   `obsidianctl`: Contains the main argument parsing logic and calls the appropriate handler functions.
 *   `Makefile`: Orchestrates the concatenation of these files into a single executable script, ensuring proper shebang and import placement.
 
