@@ -1,6 +1,6 @@
 def handle_sync(args):
     check_dependencies(["findfs", "blkid", "dd", "tune2fs", "sgdisk", "lsblk"])
-    check_root()
+    checkroot()
     target_slot = args.slot
     current_slot = get_current_slot()
     if target_slot == current_slot:
