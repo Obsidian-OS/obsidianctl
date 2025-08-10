@@ -49,12 +49,19 @@ def main():
     )
     parser_update.set_defaults(func=handle_update)
 
+    parser_sync = subparsers.add_parser(
+        "sync", help="Sync one slot to another."
+    )
+    parser_sync.add_argument(
+        "slot", choices=["a", "b"], help="The slot to sync to."
+    )
+    parser_sync.set_defaults(func=handle_sync)
+
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
 
     args = parser.parse_args()
     args.func(args)
-
 
 main()

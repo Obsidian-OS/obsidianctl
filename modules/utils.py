@@ -1,5 +1,15 @@
 import shutil
 import shlex
+import sys
+import os
+import subprocess
+import re
+
+def check_dependencies(commands):
+    for command in commands:
+        if not shutil.which(command):
+            print(f"Error: Required command '{command}' not found.", file=sys.stderr)
+            sys.exit(1)
 def checkroot():
     if os.geteuid() != 0:
       print("This script must be run as root.", file=sys.stderr)
