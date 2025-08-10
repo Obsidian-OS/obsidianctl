@@ -1,3 +1,4 @@
+import shutil
 def checkroot():
     if os.geteuid() != 0:
       print("This script must be run as root.", file=sys.stderr)
