@@ -9,6 +9,7 @@ def handle_mkobsidiansfs(args):
             sys.exit(1)
     args.system_sfs="tmp_system.sfs"
     handle_install(args)
+    os.remove("tmp_system.sfs")
     
 def handle_install(args):
     checkroot()
