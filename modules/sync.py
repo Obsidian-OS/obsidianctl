@@ -1,9 +1,7 @@
-import sys
-import subprocess
-from .utils import check_dependencies, check_root, get_current_slot, run_command
-
 def handle_sync(args):
-    check_dependencies(["findfs", "blkid", "dd", "tune2fs", "sgdisk", "lsblk", "e2label", "fatlabel"])
+    check_dependencies(
+        ["findfs", "blkid", "dd", "tune2fs", "sgdisk", "lsblk", "e2label", "fatlabel"]
+    )
     checkroot()
     target_slot = args.slot
     current_slot = get_current_slot()
@@ -93,3 +91,4 @@ def handle_sync(args):
         f"sgdisk --partition-guid={esp_partition_number}:{target_esp_part_uuid} /dev/{target_esp_disk}"
     )
     print("Sync complete.")
+
