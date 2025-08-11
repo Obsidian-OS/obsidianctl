@@ -271,20 +271,46 @@ options root=PARTUUID={root_b_partuuid} rw
         run_command(f"rm -r {esp_b_config_mount_dir}", check=False)
 
     print("Detecting other operating systems...")
+    esp_a_config_mount_dir = "/mnt/obsidian_esp_a_config"
+    esp_b_config_mount_dir = "/mnt/obsidian_esp_b_config"
+    run_command(f"mkdir -p {esp_a_config_mount_dir}")
+    run_command(f"mkdir -p {esp_b_config_mount_dir}")
     try:
+        run_command(f"mount {part1} {esp_a_config_mount_dir}")
+        run_command(f"mount {part2} {esp_b_config_mount_dir}")
         os_prober_output = run_command(
             "os-prober", capture_output=True, text=True
         ).stdout.strip()
         if os_prober_output:
             print("Found other operating systems:")
             print(os_prober_output)
-            # Here you would typically parse the output of os-prober and create boot entries
-            # For now, we'll just print the output
+            esp_a_entries_path = f"{esp_a_config_mount_dir}/loader/entries"
+            esp_b_entries_path = f"{esp_b_config_mount_dir}/loader/entries"
+            for i, line in enumerate(os_prober_output.splitlines()):
+                parts = line.split(":")
+                if len(parts) >= 3:
+                    device_path = parts[0]
+                    os_name = parts[1]
+                    entry_filename = f"50-other-os-{i}.conf"
+                    entry_content = f"""title {os_name}
+efi {device_path}
+"""
+                    with open(f"{esp_a_entries_path}/{entry_filename}", "w") as f:
+                        f.write(entry_content)
+                    with open(f"{esp_b_entries_path}/{entry_filename}", "w") as f:
+                        f.write(entry_content)
+                    print(f"Created boot entry for {os_name}")
+
         else:
             print("No other operating systems found.")
     except Exception as e:
         print(f"Error running os-prober: {e}")
         print("Please make sure os-prober is installed.")
+    finally:
+        run_command(f"umount {esp_a_config_mount_dir}", check=False)
+        run_command(f"rm -r {esp_a_config_mount_dir}", check=False)
+        run_command(f"umount {esp_b_config_mount_dir}", check=False)
+        run_command(f"rm -r {esp_b_config_mount_dir}", check=False)
 
     run_command(f"rm -r {mount_dir}", check=False)
     print("\nInstallation complete!")
