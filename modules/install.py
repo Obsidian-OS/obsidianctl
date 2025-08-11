@@ -34,14 +34,14 @@ def handle_install(args):
         print("Installation aborted.")
         sys.exit(0)
     print("Partitioning device...")
-    partition_table = """
+    partition_table = f"""
 label: gpt
-,512M,U,*
-,512M,U,*
-,5G,L,*
-,5G,L,*
-,5G,L,*
-,5G,L,*
+,{args.esp_size},U,*
+,{args.esp_size},U,*
+,{args.rootfs_size},L,*
+,{args.rootfs_size},L,*
+,{args.etc_size},L,*
+,{args.var_size},L,*
 ,,L,*
 """
     run_command(f"sfdisk {device}", input=partition_table, text=True)
