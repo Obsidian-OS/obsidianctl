@@ -1,29 +1,8 @@
-def handle_mkobsidiansfs(args):
-    if shutil.which("mkobsidiansfs"):
-        os.system(f"mkobsidiansfs {args.system_sfs}")
-    else:
-        if shutil.which("git"):
-            os.system(f"git clone https://github.com/Obsidian-OS/mkobsidiansfs/ /tmp/mkobsidiansfs;chmod u+x /tmp/mkobsidiansfs/mkobsidiansfs;/tmp/mkobsidiansfs/mkobsidiansfs {args.system_sfs} tmp_system.sfs")
-        else:
-            print("No git or mkobsidiansfs found. Please install one of these to directly pass in an .mkobsfs.")
-            sys.exit(1)
-    args.system_sfs="tmp_system.sfs"
-    handle_install(args)
-    os.remove("tmp_system.sfs")
-    
-def handle_install(args):
-    if args.dual_boot:
-        handle_dual_boot(args)
-        return
-
+def handle_dual_boot(args):
     checkroot()
     device = args.device
-    system_sfs = args.system_sfs or '/etc/system.sfs'
-    _, ext = os.path.splitext(system_sfs)
-    if ext==".mkobsfs":
-        handle_mkobsidiansfs(args)
-        sys.exit()
-    
+    system_sfs = args.system_sfs
+
     if not os.path.exists(device):
         print(f"Error: Device '{device}' does not exist.", file=sys.stderr)
         sys.exit(1)
@@ -32,11 +11,15 @@ def handle_install(args):
         print(f"Error: System image '{system_sfs}' not found.", file=sys.stderr)
         sys.exit(1)
 
-    print(f"WARNING: This will destroy all data on {device}.")
+    print(
+        f"WARNING: This will install ObsidianOS on {device} alongside your existing OS."
+    )
+    print("Please ensure you have enough free space on the device.")
     confirm = input("Are you sure you want to proceed? (y/N): ")
     if confirm.lower() != "y":
         print("Installation aborted.")
         sys.exit(0)
+
     print("Partitioning device...")
     partition_table = f"""
 label: gpt
@@ -48,18 +31,27 @@ label: gpt
 ,{args.var_size},L,*
 ,,L,*
 """
-    run_command(f"sfdisk {device}", input=partition_table, text=True)
+    run_command(f"sfdisk --append {device}", input=partition_table, text=True)
     run_command("partprobe", check=False)
     print("Waiting for device partitions to settle...")
     run_command("udevadm settle")
+
+    part_num = int(
+        run_command(
+            f"lsblk -l -n -o MAJ:MIN,NAME | grep '{os.path.basename(device)}' | wc -l",
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    )
+
     part1, part2, part3, part4, part5, part6, part7 = (
-        _get_part_path(device, 1),
-        _get_part_path(device, 2),
-        _get_part_path(device, 3),
-        _get_part_path(device, 4),
-        _get_part_path(device, 5),
-        _get_part_path(device, 6),
-        _get_part_path(device, 7),
+        _get_part_path(device, part_num - 6),
+        _get_part_path(device, part_num - 5),
+        _get_part_path(device, part_num - 4),
+        _get_part_path(device, part_num - 3),
+        _get_part_path(device, part_num - 2),
+        _get_part_path(device, part_num - 1),
+        _get_part_path(device, part_num),
     )
 
     print("Formatting partitions...")
@@ -143,7 +135,9 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     os_release_path = "/etc/os-release"
     obsidianctl_dest = f"{mount_dir}/usr/bin/obsidianctl"
     if os.path.exists(f"{mount_dir}/obsidianctl-aur-installed"):
-        print("obsidianctl has been installed through the AUR. Skipping obsidianctl copy...")
+        print(
+            "obsidianctl has been installed through the AUR. Skipping obsidianctl copy..."
+        )
     else:
         run_command(f"mkdir -p {mount_dir}/usr/bin")
         run_command(f"cp {script_path} {obsidianctl_dest}")
@@ -189,14 +183,16 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
             f.write(fstab_content_b)
     finally:
         run_command(f"umount {mount_b_dir}", check=False)
-        run_command(f"rm -r {mount_b_dir}")
+        run_command(f"rm -r {mount_b_dir}", check=False)
 
     print("Installing systemd-boot to ESP_A...")
     esp_a_mount_dir = "/mnt/obsidian_esp_a"
     run_command(f"mkdir -p {esp_a_mount_dir}")
     try:
         run_command(f"mount {part1} {esp_a_mount_dir}")
-        run_command(f"bootctl --esp-path={esp_a_mount_dir} --efi-boot-option-description=\"ObsidianOS (Slot A)\" install")
+        run_command(
+            f'bootctl --esp-path={esp_a_mount_dir} --efi-boot-option-description="ObsidianOS (Slot A)" install'
+        )
     finally:
         run_command(f"umount {esp_a_mount_dir}", check=False)
         run_command(f"rm -r {esp_a_mount_dir}", check=False)
@@ -206,7 +202,9 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     run_command(f"mkdir -p {esp_b_mount_dir}")
     try:
         run_command(f"mount {part2} {esp_b_mount_dir}")
-        run_command(f"bootctl --esp-path={esp_b_mount_dir} --efi-boot-option-description=\"ObsidianOS (Slot B)\" install")
+        run_command(
+            f'bootctl --esp-path={esp_b_mount_dir} --efi-boot-option-description="ObsidianOS (Slot B)" install'
+        )
     finally:
         run_command(f"umount {esp_b_mount_dir}", check=False)
         run_command(f"rm -r {esp_b_mount_dir}", check=False)
@@ -225,7 +223,7 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
         sys.exit(1)
 
     loader_conf = """
-timeout 0
+timeout 3
 default obsidian-a.conf
 """
     entry_a_conf = f"""
@@ -271,6 +269,23 @@ options root=PARTUUID={root_b_partuuid} rw
     finally:
         run_command(f"umount {esp_b_config_mount_dir}", check=False)
         run_command(f"rm -r {esp_b_config_mount_dir}", check=False)
+
+    print("Detecting other operating systems...")
+    try:
+        os_prober_output = run_command(
+            "os-prober", capture_output=True, text=True
+        ).stdout.strip()
+        if os_prober_output:
+            print("Found other operating systems:")
+            print(os_prober_output)
+            # Here you would typically parse the output of os-prober and create boot entries
+            # For now, we'll just print the output
+        else:
+            print("No other operating systems found.")
+    except Exception as e:
+        print(f"Error running os-prober: {e}")
+        print("Please make sure os-prober is installed.")
+
     run_command(f"rm -r {mount_dir}", check=False)
     print("\nInstallation complete!")
     print("Default boot order will attempt Slot A, then Slot B.")

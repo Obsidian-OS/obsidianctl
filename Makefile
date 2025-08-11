@@ -6,6 +6,8 @@ build:
 	echo -e "\n" >> obsidianctl
 	cat ./modules/status.py >> obsidianctl
 	echo -e "\n" >> obsidianctl
+	cat ./modules/dualboot.py >> obsidianctl
+	echo -e "\n" >> obsidianctl
 	cat ./modules/install.py >> obsidianctl
 	echo -e "\n" >> obsidianctl
 	cat ./modules/switch.py >> obsidianctl
