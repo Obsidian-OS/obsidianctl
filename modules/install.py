@@ -192,7 +192,7 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     run_command(f"mkdir -p {esp_a_mount_dir}")
     try:
         run_command(f"mount {part1} {esp_a_mount_dir}")
-        run_command(f"bootctl --esp-path={esp_a_mount_dir} install")
+        run_command(f"bootctl --esp-path={esp_a_mount_dir} --efi-boot-option-description=\"ObsidianOS (Slot A)\" install")
     finally:
         run_command(f"umount {esp_a_mount_dir}", check=False)
         run_command(f"rm -r {esp_a_mount_dir}", check=False)
@@ -202,7 +202,7 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     run_command(f"mkdir -p {esp_b_mount_dir}")
     try:
         run_command(f"mount {part2} {esp_b_mount_dir}")
-        run_command(f"bootctl --esp-path={esp_b_mount_dir} install")
+        run_command(f"bootctl --esp-path={esp_b_mount_dir} --efi-boot-option-description=\"ObsidianOS (Slot B)\" install")
     finally:
         run_command(f"umount {esp_b_mount_dir}", check=False)
         run_command(f"rm -r {esp_b_mount_dir}", check=False)
