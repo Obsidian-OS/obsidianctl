@@ -22,6 +22,10 @@ def main():
         "device", help="The target block device (e.g., /dev/sda)."
     )
     parser_install.add_argument("system_sfs", help="Path to the SquashFS system image. If you pass in an .mkobsfs file, it will download and run mkobsidiansfs.")
+    parser_install.add_argument("--rootfs-size", default="5G", help="Size of the root partitions for slots a and b.")
+    parser_install.add_argument("--etc-size", default="5G", help="Size of the shared etc partition.")
+    parser_install.add_argument("--var-size", default="5G", help="Size of the shared var partition.")
+    parser_install.add_argument("--esp-size", default="512M", help="Size of the ESP partitions for slots a and b.")
     parser_install.set_defaults(func=handle_install)
     parser_switchonce = subparsers.add_parser(
       "switch-once", help="Switch active boot slot to 'a' or 'b' once only."
