@@ -36,12 +36,15 @@ label: gpt
     print("Waiting for device partitions to settle...")
     run_command("udevadm settle")
 
-    part_num = int(
-        run_command(
-            f"lsblk -l -n -o MAJ:MIN,NAME | grep '{os.path.basename(device)}' | wc -l",
-            capture_output=True,
-            text=True,
-        ).stdout.strip()
+    part_num = (
+        int(
+            run_command(
+                f"bash -c \"lsblk -l -n -o MAJ:MIN,NAME | grep '{os.path.basename(device)}' | wc -l\"",
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+        )
+        - 1
     )
 
     part1, part2, part3, part4, part5, part6, part7 = (
