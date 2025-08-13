@@ -7,7 +7,7 @@ def handle_update(args):
         sys.exit(1)
 
     target_label = f"root_{slot}"
-    esp_label = f"ESP_{slot}"
+    esp_label = f"ESP_{slot.upper()}"
     print(f"Updating slot '{slot}' with image '{system_sfs}'...")
     print(f"WARNING: THIS WILL ERASE ALL OF SLOT {slot.upper()}. INCLUDING /root.")
     confirm = input("Continue? (y/N): ")
