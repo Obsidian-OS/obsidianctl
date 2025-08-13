@@ -169,7 +169,7 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     print("Unmounting slot 'a' partitions before copy...")
     run_command(f"umount -R {mount_dir}")
     print("Copying system to slot 'b'...")
-    run_command(f"dd if={part3} of={part4} bs=16M status=progress")
+    run_command(f"pv \"{part3}\" | dd oflag=sync of={part4} bs=16M")
     run_command(f"e2label {part4} root_b")
     print("Correcting fstab for slot 'b'...")
     mount_b_dir = "/mnt/obsidian_install_b"

@@ -1,6 +1,16 @@
 def handle_sync(args):
     check_dependencies(
-        ["findfs", "blkid", "dd", "tune2fs", "sgdisk", "lsblk", "e2label", "fatlabel"]
+        [
+            "findfs",
+            "blkid",
+            "dd",
+            "tune2fs",
+            "sgdisk",
+            "lsblk",
+            "e2label",
+            "fatlabel",
+            "pv",
+        ]
     )
     checkroot()
     target_slot = args.slot
@@ -65,7 +75,7 @@ def handle_sync(args):
         sys.exit(1)
 
     print("Copying data from source root to target root. This may take a while...")
-    run_command(f"dd if={source_root_dev} of={target_root_dev} bs=4M status=progress")
+    run_command(f'pv "{source_root_dev}" |dd oflag=sync of={target_root_dev} bs=4M')
     print(f"Setting label of {target_root_dev} to {target_root_label}")
     run_command(f"e2label {target_root_dev} {target_root_label}")
     print("Restoring original filesystem identifier for the root partition...")
@@ -79,7 +89,7 @@ def handle_sync(args):
         f"sgdisk --partition-guid={partition_number}:{target_root_part_uuid} /dev/{target_disk}"
     )
     print("Copying data from source ESP to target ESP...")
-    run_command(f"dd if={source_esp_dev} of={target_esp_dev} bs=1M status=progress")
+    run_command(f'pv "{source_esp_dev}" | oflag=sync of={target_esp_dev} bs=1M')
     print(f"Setting label of {target_esp_dev} to {target_esp_label}")
     run_command(f"fatlabel {target_esp_dev} {target_esp_label}")
     print("Restoring original partition identifier for the ESP...")
@@ -91,4 +101,3 @@ def handle_sync(args):
         f"sgdisk --partition-guid={esp_partition_number}:{target_esp_part_uuid} /dev/{target_esp_disk}"
     )
     print("Sync complete.")
-
