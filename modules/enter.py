@@ -33,9 +33,7 @@ def handle_enter(args):
                     os.makedirs(target_mount)
                 subprocess.run(["mount", shared_partition, target_mount], check=True)
 
-        if shutil.which("arch-chroot"):
-            print(f"Using arch-chroot to enter slot {slot}...")
-            
+        if shutil.which("arch-chroot"): 
             cmd = ["arch-chroot"]
             if not args.enable_networking:
                 cmd.append("-r")
@@ -43,7 +41,7 @@ def handle_enter(args):
             cmd.append(mount_point)
             subprocess.run(cmd, check=True)
         else:
-            print("arch-chroot not found, performing manual chroot...")
+            print("WARNING: arch-chroot not found, performing manual chroot...")
             if args.mount_essentials:
                 for essential_fs in ["proc", "sys", "dev", "dev/pts", "dev/shm"]:
                     target_mount = os.path.join(mount_point, essential_fs)
@@ -70,7 +68,6 @@ def handle_enter(args):
 
             os.chroot(mount_point)
             os.chdir("/")
-            
             shell = os.environ.get("SHELL", "/bin/bash")
             subprocess.run([shell], check=True)
 
