@@ -16,6 +16,8 @@ build:
 	echo -e "\n" >> obsidianctl
 	cat ./modules/sync.py >> obsidianctl
 	echo -e "\n" >> obsidianctl
+	cat ./modules/enter.py >> obsidianctl
+	echo -e "\n" >> obsidianctl
 	cat ./main >> obsidianctl
 	chmod +x obsidianctl
 
