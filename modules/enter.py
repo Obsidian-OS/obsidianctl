@@ -11,11 +11,15 @@ def handle_enter(args):
 
     slot = args.slot
     root_label = f"root_{slot}"
+    esp_label = f"ESP_{slot.upper()}"
     root_partition = f"/dev/disk/by-label/{root_label}"
+    esp_partition = f"/dev/disk/by-label/{esp_label}"
     mount_point = f"/mnt/obsidian_{slot}"
-
     if not os.path.exists(root_partition):
         print(f"Root partition for slot {slot} ({root_partition}) not found.", file=sys.stderr)
+        sys.exit(1)
+    if not os.path.exists(esp_partition):
+        print(f"ESP for slot {slot} ({esp_partition}) not found.", file=sys.stderr)
         sys.exit(1)
 
     if not os.path.exists(mount_point):
@@ -23,6 +27,7 @@ def handle_enter(args):
 
     try:
         subprocess.run(["mount", root_partition, mount_point], check=True)
+        subprocess.run(["mount", esp_partition, f"{mount_point}/boot", "--mkdir"], check=True)
 
         for shared_part in ["etc_ab", "var_ab", "home_ab"]:
             shared_partition = f"/dev/disk/by-label/{shared_part}"
@@ -72,7 +77,7 @@ def handle_enter(args):
             subprocess.run([shell], check=True)
 
     finally:
-        print("Exiting chroot and unmounting filesystems...")
+        print("Exiting...")
         for i in range(5):
             try:
                 subprocess.run(["umount", "-R", mount_point], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
