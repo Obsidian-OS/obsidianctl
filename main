@@ -58,6 +58,26 @@ def main():
     )
     parser_sync.set_defaults(func=handle_sync)
 
+    parser_enter = subparsers.add_parser(
+        "enter-slot", help="Chroot into a slot."
+    )
+    parser_enter.add_argument(
+        "slot", choices=["a", "b"], help="The slot to chroot into."
+    )
+    parser_enter.add_argument(
+        "--enable-networking", action="store_true", help="Enable networking in the chroot."
+    )
+    parser_enter.add_argument(
+        "--mount-essentials", action="store_true", help="Mount /proc, /sys, and /dev."
+    )
+    parser_enter.add_argument(
+        "--mount-home", action="store_true", help="Bind mount /home into the chroot."
+    )
+    parser_enter.add_argument(
+        "--mount-root", action="store_true", help="Bind mount /root into the chroot."
+    )
+    parser_enter.set_defaults(func=handle_enter)
+
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
