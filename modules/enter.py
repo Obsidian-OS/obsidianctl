@@ -38,7 +38,7 @@ def handle_enter(args):
             
             cmd = ["arch-chroot"]
             if not args.enable_networking:
-                cmd.append("--offline")
+                cmd.append("-r")
             
             cmd.append(mount_point)
             subprocess.run(cmd, check=True)
