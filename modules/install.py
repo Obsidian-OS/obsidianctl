@@ -12,10 +12,6 @@ def handle_mkobsidiansfs(args):
     os.remove("system.sfs")
     
 def handle_install(args):
-    if args.dual_boot:
-        handle_dual_boot(args)
-        return
-
     checkroot()
     device = args.device
     system_sfs = args.system_sfs or '/etc/system.sfs'
@@ -23,7 +19,10 @@ def handle_install(args):
     if ext==".mkobsfs":
         handle_mkobsidiansfs(args)
         sys.exit()
-    
+    if args.dual_boot:
+        handle_dual_boot(args)
+        return
+
     if not os.path.exists(device):
         print(f"Error: Device '{device}' does not exist.", file=sys.stderr)
         sys.exit(1)
