@@ -114,6 +114,20 @@ Clones the currently running slot to the specified slot. This is a block-level c
 sudo ./obsidianctl sync b
 ```
 
+#### `enter-slot <slot>`
+
+Enters into a slot without rebooting. Uses `arch-chroot`.
+
+*   `<slot>`: The slot to chroot into (`a` or `b`).
+*   `--enable-networking`: Enables networking features.
+*   `--mount-essentials`: Mounts /proc, /sys and /dev.
+*   `--mount-home`: Mounts /home.
+*   `--mount-root`: Mounts /root.
+
+```bash
+sudo ./obsidianctl enter-slot b --enable-networking --mount-home
+```
+
 ## Modular Structure
 
 The `obsidianctl` project is organized into a `modules` directory and a main `obsidianctl` file.
@@ -124,7 +138,9 @@ The `obsidianctl` project is organized into a `modules` directory and a main `ob
 *   `modules/switch.py`: Implements the `handle_switch` command logic.
 *   `modules/update.py`: Implements the `handle_update` command logic.
 *   `modules/sync.py`: Implements the `handle_sync` command logic.
-*   `obsidianctl`: Contains the main argument parsing logic and calls the appropriate handler functions.
+*   `modules/dualboot.py`: Handles dualbooting logic.
+*   `modules/enter.py`: Implements entering slots.
+*   `main`: Contains the main argument parsing logic and calls the appropriate handler functions.
 *   `Makefile`: Orchestrates the concatenation of these files into a single executable script, ensuring proper shebang and import placement.
 
 ## License
