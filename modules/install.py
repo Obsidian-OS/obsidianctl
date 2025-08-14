@@ -1,15 +1,15 @@
 def handle_mkobsidiansfs(args):
     if shutil.which("mkobsidiansfs"):
-        os.system(f"mkobsidiansfs {args.system_sfs}")
+        os.system(f"mkobsidiansfs {args.system_sfs} system.sfs")
     else:
         if shutil.which("git"):
             os.system(f"git clone https://github.com/Obsidian-OS/mkobsidiansfs/ /tmp/mkobsidiansfs;chmod u+x /tmp/mkobsidiansfs/mkobsidiansfs;/tmp/mkobsidiansfs/mkobsidiansfs {args.system_sfs} tmp_system.sfs")
         else:
             print("No git or mkobsidiansfs found. Please install one of these to directly pass in an .mkobsfs.")
             sys.exit(1)
-    args.system_sfs="tmp_system.sfs"
+    args.system_sfs="system.sfs"
     handle_install(args)
-    os.remove("tmp_system.sfs")
+    os.remove("system.sfs")
     
 def handle_install(args):
     if args.dual_boot:
