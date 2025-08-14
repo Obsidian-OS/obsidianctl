@@ -75,7 +75,7 @@ def handle_sync(args):
         sys.exit(1)
 
     print("Copying data from source root to target root. This may take a while...")
-    run_command(f'pv "{source_root_dev}" |dd oflag=sync of={target_root_dev} bs=4M')
+    run_command(f'bash -c "pv "{source_root_dev}" |dd oflag=sync of={target_root_dev} bs=4M"')
     print(f"Setting label of {target_root_dev} to {target_root_label}")
     run_command(f"e2label {target_root_dev} {target_root_label}")
     print("Restoring original filesystem identifier for the root partition...")
