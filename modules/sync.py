@@ -89,7 +89,7 @@ def handle_sync(args):
         f"sgdisk --partition-guid={partition_number}:{target_root_part_uuid} /dev/{target_disk}"
     )
     print("Copying data from source ESP to target ESP...")
-    run_command(f'pv "{source_esp_dev}" | oflag=sync of={target_esp_dev} bs=1M')
+    run_command(f'bash -c "pv "{source_esp_dev}" | dd oflag=sync of={target_esp_dev} bs=1M"')
     print(f"Setting label of {target_esp_dev} to {target_esp_label}")
     run_command(f"fatlabel {target_esp_dev} {target_esp_label}")
     print("Restoring original partition identifier for the ESP...")
