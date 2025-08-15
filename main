@@ -31,6 +31,10 @@ def main():
       "slot", choices=["a", "b"], help="The slot to make active for once."
     )
     parser_switchonce.set_defaults(func=handle_switchonce)
+    parser_diff = subparsers.add_parser(
+        "slot-diff", help="Show diff between the two slots."
+    )
+    parser_diff.set_defaults(func=handle_slot_diff)
     parser_switch = subparsers.add_parser(
         "switch", help="Switch active boot slot to 'a' or 'b'."
     )
