@@ -1,3 +1,16 @@
+def handle_update_mkobsidiansfs(args):
+    if shutil.which("mkobsidiansfs"):
+        os.system(f"mkobsidiansfs {args.system_sfs} system.sfs")
+    else:
+        if shutil.which("git"):
+            os.system(f"git clone https://github.com/Obsidian-OS/mkobsidiansfs/ /tmp/mkobsidiansfs;chmod u+x /tmp/mkobsidiansfs/mkobsidiansfs;/tmp/mkobsidiansfs/mkobsidiansfs {args.system_sfs} tmp_system.sfs")
+        else:
+            print("No git or mkobsidiansfs found. Please install one of these to directly pass in an .mkobsfs.")
+            sys.exit(1)
+    args.system_sfs="system.sfs"
+    handle_update(args)
+    os.remove("system.sfs")
+    
 def handle_update(args):
     checkroot()
     slot = args.slot
@@ -5,7 +18,10 @@ def handle_update(args):
     if not os.path.exists(system_sfs):
         print(f"Error: System image '{system_sfs}' not found.", file=sys.stderr)
         sys.exit(1)
-
+    _, ext = os.path.splitext(system_sfs)
+    if ext==".mkobsfs":
+        handle_update_mkobsidiansfs(args)
+        sys.exit()
     target_label = f"root_{slot}"
     esp_label = f"ESP_{slot.upper()}"
     print(f"Updating slot '{slot}' with image '{system_sfs}'...")
