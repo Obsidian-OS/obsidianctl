@@ -78,6 +78,15 @@ def main():
     )
     parser_enter.set_defaults(func=handle_enter)
 
+    parser_netupdate = subparsers.add_parser(
+        "enter-slot", help="Update a slot with the latest system image."
+    )
+    parser_netupdate.add_argument(
+        "slot", choices=["a", "b"], help="The slot to update."
+    )
+    parser_netupdate.add_argument(
+        "--break-system", action="store_true", help="Forcibly update even if not using an default system.sfs."
+    )
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
