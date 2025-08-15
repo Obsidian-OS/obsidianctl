@@ -83,7 +83,7 @@ def main():
     parser_enter.set_defaults(func=handle_enter)
 
     parser_netupdate = subparsers.add_parser(
-        "enter-slot", help="Update a slot with the latest system image."
+        "netupdate", help="Update a slot with the latest system image."
     )
     parser_netupdate.add_argument(
         "slot", choices=["a", "b"], help="The slot to update."
