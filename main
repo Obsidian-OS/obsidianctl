@@ -81,7 +81,6 @@ def main():
         "--mount-root", action="store_true", help="Bind mount /root into the chroot."
     )
     parser_enter.set_defaults(func=handle_enter)
-
     parser_netupdate = subparsers.add_parser(
         "netupdate", help="Update a slot with the latest system image."
     )
@@ -91,6 +90,7 @@ def main():
     parser_netupdate.add_argument(
         "--break-system", action="store_true", help="Forcibly update even if not using an default system.sfs."
     )
+    parser_netupdate.set_defaults(func=handle_netupdate)
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
