@@ -22,6 +22,10 @@ build:
 	echo -e "\n" >> obsidianctl
 	cat ./modules/diff.py >> obsidianctl
 	echo -e "\n" >> obsidianctl
+	cat ./modules/backup.py >> obsidianctl
+	echo -e "\n" >> obsidianctl
+	cat ./modules/health.py >> obsidianctl
+	echo -e "\n" >> obsidianctl
 	cat ./main >> obsidianctl
 	chmod +x obsidianctl
 

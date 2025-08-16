@@ -35,6 +35,42 @@ def main():
         "slot-diff", help="Show diff between the two slots."
     )
     parser_diff.set_defaults(func=handle_slot_diff)
+    
+    parser_backup = subparsers.add_parser(
+        "backup-slot", help="Create a backup of a specific slot."
+    )
+    parser_backup.add_argument(
+        "slot", choices=["a", "b"], help="The slot to backup."
+    )
+    parser_backup.add_argument(
+        "--backup-dir", help="Directory to store backups (default: /var/backups/obsidianctl/slot_X)."
+    )
+    parser_backup.set_defaults(func=handle_backup_slot)
+    
+    parser_rollback = subparsers.add_parser(
+        "rollback-slot", help="Rollback a slot to a previous backup."
+    )
+    parser_rollback.add_argument(
+        "slot", choices=["a", "b"], help="The slot to rollback."
+    )
+    parser_rollback.add_argument(
+        "backup_path", help="Path to the backup file (.tar.gz)."
+    )
+    parser_rollback.set_defaults(func=handle_rollback_slot)
+    
+    parser_health = subparsers.add_parser(
+        "health-check", help="Check the health of both A/B slots."
+    )
+    parser_health.set_defaults(func=handle_health_check)
+    
+    parser_verify = subparsers.add_parser(
+        "verify-integrity", help="Verify the integrity of a specific slot."
+    )
+    parser_verify.add_argument(
+        "slot", choices=["a", "b"], help="The slot to verify."
+    )
+    parser_verify.set_defaults(func=handle_verify_integrity)
+    
     parser_switch = subparsers.add_parser(
         "switch", help="Switch active boot slot to 'a' or 'b'."
     )

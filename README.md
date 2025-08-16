@@ -9,6 +9,10 @@
 *   **`switch`**: Change the active boot slot (A or B) for the next boot, persistently.
 *   **`update`**: Update a specific A/B slot with a new SquashFS system image.
 *   **`sync`**: Clone the current slot's root and ESP partitions to the other slot using `dd`.
+*   **`backup-slot`**: Create a compressed backup of a specific slot with metadata.
+*   **`rollback-slot`**: Restore a slot from a previous backup.
+*   **`health-check`**: Comprehensive health assessment of both A/B slots.
+*   **`verify-integrity`**: Verify filesystem integrity and check for corrupted files.
 
 ## Install (AUR)
 
@@ -128,6 +132,46 @@ Enters into a slot without rebooting. Uses `arch-chroot`.
 sudo ./obsidianctl enter-slot b --enable-networking --mount-home
 ```
 
+#### `backup-slot <slot>`
+
+Creates a compressed backup of a specific slot with metadata.
+
+*   `<slot>`: The slot to backup (`a` or `b`).
+*   `--backup-dir`: Directory to store backups (default: `/var/backups/obsidianctl/slot_X`).
+
+```bash
+sudo ./obsidianctl backup-slot a --backup-dir /mnt/external/backups
+```
+
+#### `rollback-slot <slot> <backup_path>`
+
+Restores a slot from a previous backup.
+
+*   `<slot>`: The slot to restore (`a` or `b`).
+*   `<backup_path>`: Path to the backup file (`.tar.gz`).
+
+```bash
+sudo ./obsidianctl rollback-slot a /var/backups/obsidianctl/slot_a/slot_a_backup_20241201_143022.tar.gz
+```
+
+#### `health-check`
+
+Performs a comprehensive health assessment of both A/B slots.
+
+```bash
+sudo ./obsidianctl health-check
+```
+
+#### `verify-integrity <slot>`
+
+Verifies filesystem integrity and checks for corrupted files in a specific slot.
+
+*   `<slot>`: The slot to verify (`a` or `b`).
+
+```bash
+sudo ./obsidianctl verify-integrity a
+```
+
 ## Modular Structure
 
 The `obsidianctl` project is organized into a `modules` directory and a main `obsidianctl` file.
@@ -140,6 +184,8 @@ The `obsidianctl` project is organized into a `modules` directory and a main `ob
 *   `modules/sync.py`: Implements the `handle_sync` command logic.
 *   `modules/dualboot.py`: Handles dualbooting logic.
 *   `modules/enter.py`: Implements entering slots.
+*   `modules/backup.py`: Handles slot backup and rollback operations.
+*   `modules/health.py`: Implements health checks and integrity verification.
 *   `main`: Contains the main argument parsing logic and calls the appropriate handler functions.
 *   `Makefile`: Orchestrates the concatenation of these files into a single executable script, ensuring proper shebang and import placement.
 
