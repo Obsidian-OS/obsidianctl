@@ -171,7 +171,17 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     print("Unmounting slot 'a' partitions before copy...")
     run_command(f"umount -R {mount_dir}")
     print("Copying system to slot 'b'...")
-    run_command(f"bash -c \"pv \\\"{part3}\\\" | dd of={part4} bs=16M oflag=sync\"")
+    source_mount_point = "/mnt/obsidian_source_a"
+    target_mount_point = "/mnt/obsidian_target_b"
+    run_command(f"mkdir -p {source_mount_point} {target_mount_point}")
+    try:
+        run_command(f"mount {part3} {source_mount_point}")
+        run_command(f"mount {part4} {target_mount_point}")
+        run_command(f"rsync -aHAX --inplace --delete --info=progress2 {source_mount_point}/ {target_mount_point}/")
+    finally:
+        run_command(f"umount {source_mount_point}", check=False)
+        run_command(f"umount {target_mount_point}", check=False)
+        run_command(f"rm -r {source_mount_point} {target_mount_point}", check=False)
     run_command(f"e2label {part4} root_b")
     print("Correcting fstab for slot 'b'...")
     mount_b_dir = "/mnt/obsidian_install_b"
@@ -188,7 +198,7 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
             f.write(fstab_content_b)
     finally:
         run_command(f"umount {mount_b_dir}", check=False)
-        run_command(f"rm -r {mount_b_dir}")
+        run_command(f"rm -r {mount_b_dir}", check=False)
 
     print("Installing systemd-boot to ESP_A...")
     esp_a_mount_dir = "/mnt/obsidian_esp_a"

@@ -3,13 +3,12 @@ def handle_sync(args):
         [
             "findfs",
             "blkid",
-            "dd",
+            "rsync",
             "tune2fs",
             "sgdisk",
             "lsblk",
             "e2label",
             "fatlabel",
-            "pv",
         ]
     )
     checkroot()
@@ -53,51 +52,35 @@ def handle_sync(args):
     print(f"Target root device: {target_root_dev}")
     print(f"Source ESP device: {source_esp_dev}")
     print(f"Target ESP device: {target_esp_dev}")
-    print("Reading original partition identifiers from target slot...")
-    try:
-        target_root_fs_uuid = run_command(
-            f"blkid -s UUID -o value {target_root_dev}", capture_output=True
-        ).stdout.strip()
-        target_root_part_uuid = run_command(
-            f"blkid -s PARTUUID -o value {target_root_dev}", capture_output=True
-        ).stdout.strip()
-        target_esp_part_uuid = run_command(
-            f"blkid -s PARTUUID -o value {target_esp_dev}", capture_output=True
-        ).stdout.strip()
-    except subprocess.CalledProcessError as e:
-        print(f"Error: Could not read partition identifiers. {e}", file=sys.stderr)
-        sys.exit(1)
-    if not all([target_root_fs_uuid, target_root_part_uuid, target_esp_part_uuid]):
-        print(
-            "Error: Could not read one or more original partition identifiers from the target slot.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
-
     print("Copying data from source root to target root. This may take a while...")
-    run_command(f'bash -c "pv "{source_root_dev}" |dd oflag=sync of={target_root_dev} bs=4M"')
+    source_mount_point = "/mnt/obsidian_source_root"
+    target_mount_point = "/mnt/obsidian_target_root"
+    run_command(f"mkdir -p {source_mount_point} {target_mount_point}")
+    try:
+        run_command(f"mount {source_root_dev} {source_mount_point}")
+        run_command(f"mount {target_root_dev} {target_mount_point}")
+        run_command(f"rsync -aHAX --inplace --delete --info=progress2 {source_mount_point}/ {target_mount_point}/")
+    finally:
+        run_command(f"umount {source_mount_point}", check=False)
+        run_command(f"umount {target_mount_point}", check=False)
+        run_command(f"rm -r {source_mount_point} {target_mount_point}", check=False)
+
     print(f"Setting label of {target_root_dev} to {target_root_label}")
     run_command(f"e2label {target_root_dev} {target_root_label}")
-    print("Restoring original filesystem identifier for the root partition...")
-    run_command(f"tune2fs -U {target_root_fs_uuid} {target_root_dev}")
-    print("Restoring original partition identifier for the root partition...")
-    target_disk = run_command(
-        f"lsblk -no pkname {target_root_dev}", capture_output=True
-    ).stdout.strip()
-    partition_number = "".join(filter(str.isdigit, target_root_dev.split("/")[-1]))
-    run_command(
-        f"sgdisk --partition-guid={partition_number}:{target_root_part_uuid} /dev/{target_disk}"
-    )
+
     print("Copying data from source ESP to target ESP...")
-    run_command(f'bash -c "pv "{source_esp_dev}" | dd oflag=sync of={target_esp_dev} bs=1M"')
+    source_esp_mount_point = "/mnt/obsidian_source_esp"
+    target_esp_mount_point = "/mnt/obsidian_target_esp"
+    run_command(f"mkdir -p {source_esp_mount_point} {target_esp_mount_point}")
+    try:
+        run_command(f"mount {source_esp_dev} {source_esp_mount_point}")
+        run_command(f"mount {target_esp_dev} {target_esp_mount_point}")
+        run_command(f"rsync -aHAX --inplace --delete --info=progress2 {source_esp_mount_point}/ {target_esp_mount_point}/")
+    finally:
+        run_command(f"umount {source_esp_mount_point}", check=False)
+        run_command(f"umount {target_esp_mount_point}", check=False)
+        run_command(f"rm -r {source_esp_mount_point} {target_esp_mount_point}", check=False)
+
     print(f"Setting label of {target_esp_dev} to {target_esp_label}")
     run_command(f"fatlabel {target_esp_dev} {target_esp_label}")
-    print("Restoring original partition identifier for the ESP...")
-    target_esp_disk = run_command(
-        f"lsblk -no pkname {target_esp_dev}", capture_output=True
-    ).stdout.strip()
-    esp_partition_number = "".join(filter(str.isdigit, target_esp_dev.split("/")[-1]))
-    run_command(
-        f"sgdisk --partition-guid={esp_partition_number}:{target_esp_part_uuid} /dev/{target_esp_disk}"
-    )
     print("Sync complete.")
