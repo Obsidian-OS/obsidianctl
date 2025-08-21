@@ -153,6 +153,14 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
             file=sys.stderr,
         )
 
+    if os.path.exists("/usr/share/pixmaps/obsidianos.png"):
+        run_command(f"mkdir -p {mount_dir}/usr/share/pixmaps/")
+        run_command(f"cp /usr/share/pixmaps/obsidianos.png {mount_dir}/usr/share/pixmaps/obsidianos.png")
+    else:
+        print(
+            f"Warning: ObsidianOS Logo file wasn't found. Skipping.",
+            file=sys.stderr,
+        )
     print("\nSlot 'a' is now configured and mounted.")
     chroot_confirm = input(
         "Do you want to chroot into slot 'a' to make changes before copying it to slot B? (y/N): "
