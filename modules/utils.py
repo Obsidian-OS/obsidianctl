@@ -6,7 +6,7 @@ import subprocess
 import re
 
 def check_dependencies(commands):
-    commands.extend(["curl", "tar"])
+    commands.extend(["curl", "tar", "mksquashfs", "unsquashfs"])
     for command in commands:
         if not shutil.which(command):
             print(f"Error: Required command '{command}' not found.", file=sys.stderr)

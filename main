@@ -54,7 +54,7 @@ def main():
         "slot", choices=["a", "b"], help="The slot to rollback."
     )
     parser_rollback.add_argument(
-        "backup_path", help="Path to the backup file (.tar.gz)."
+        "backup_path", help="Path to the backup file (.sfs)."
     )
     parser_rollback.set_defaults(func=handle_rollback_slot)
     

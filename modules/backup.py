@@ -22,15 +22,14 @@ def handle_backup_slot(args):
     run_command(f"mkdir -p {mount_dir}")
     try:
         run_command(f"mount {part_path} {mount_dir}")
-        print(f"Creating backup archive at {backup_path}.tar.gz...")
-        with tarfile.open(f"{backup_path}.tar.gz", "w:gz") as tar:
-            tar.add(mount_dir, arcname=f"slot_{slot}")
+        print(f"Creating backup archive at {backup_path}.sfs...")
+                run_command(f"mksquashfs {mount_dir} {backup_path}.sfs -comp xz -noappend -wildcards -e proc/* sys/* dev/* run/* tmp/* mnt/* media/* lost+found")
         
         metadata = {
             "slot": slot,
             "timestamp": timestamp,
-            "backup_path": f"{backup_path}.tar.gz",
-            "size": os.path.getsize(f"{backup_path}.tar.gz"),
+            "backup_path": f"{backup_path}.sfs",
+            "size": os.path.getsize(f"{backup_path}.sfs"),
             "kernel": "unknown",
             "packages": []
         }
@@ -67,8 +66,8 @@ def handle_rollback_slot(args):
         print("Error: Please specify a backup path with --backup-path", file=sys.stderr)
         sys.exit(1)
     
-    if not backup_path.endswith('.tar.gz'):
-        backup_path += '.tar.gz'
+    if not backup_path.endswith('.sfs'):
+        backup_path += '.sfs'
     
     if not os.path.exists(backup_path):
         print(f"Error: Backup file '{backup_path}' not found.", file=sys.stderr)
@@ -91,33 +90,27 @@ def handle_rollback_slot(args):
     run_command(f"mkdir -p {mount_dir}")
     try:
         run_command(f"umount {part_path}", check=False)
-        print("Extracting backup...")
-        with tarfile.open(backup_path, "r:gz") as tar:
-            tar.extractall(path="/tmp")
+        print(f"Formatting partition {part_path}...")
+        run_command(f"mkfs.ext4 -F {part_path}")
+        run_command(f"mount {part_path} {mount_dir}")
         
-        extracted_dir = f"/tmp/slot_{slot}"
-        if os.path.exists(extracted_dir):
-            print("Copying backup data to slot...")
-            run_command(f"cp -a {extracted_dir}/. {mount_dir}/")    
-            fstab_path = os.path.join(mount_dir, "etc/fstab")
-            if os.path.exists(fstab_path):
-                with open(fstab_path, "r") as f:
-                    fstab_content = f.read()
-                if slot == "a":
-                    fstab_content = fstab_content.replace("LABEL=root_b", "LABEL=root_a").replace("LABEL=ESP_B", "LABEL=ESP_A")
-                else:
-                    fstab_content = fstab_content.replace("LABEL=root_a", "LABEL=root_b").replace("LABEL=ESP_A", "LABEL=ESP_B")
-                
-                with open(fstab_path, "w") as f:
-                    f.write(fstab_content)
+        print("Extracting backup...")
+        run_command(f"unsquashfs -d {mount_dir} {backup_path}")
+        
+        fstab_path = os.path.join(mount_dir, "etc/fstab")
+        if os.path.exists(fstab_path):
+            with open(fstab_path, "r") as f:
+                fstab_content = f.read()
+            if slot == "a":
+                fstab_content = fstab_content.replace("LABEL=root_b", "LABEL=root_a").replace("LABEL=ESP_B", "LABEL=ESP_A")
+            else:
+                fstab_content = fstab_content.replace("LABEL=root_a", "LABEL=root_b").replace("LABEL=ESP_A", "LABEL=ESP_B")
             
-            print(f"Rollback completed successfully!")
-        else:
-            print("Error: Invalid backup format", file=sys.stderr)
-            sys.exit(1)
+            with open(fstab_path, "w") as f:
+                f.write(fstab_content)
+        
+        print(f"Rollback completed successfully!")
             
     finally:
         run_command(f"umount {mount_dir}", check=False)
-        run_command(f"rmdir {mount_dir}", check=False)
-        if os.path.exists(extracted_dir):
-            shutil.rmtree(extracted_dir) 
+        run_command(f"rmdir {mount_dir}", check=False) 

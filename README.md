@@ -148,10 +148,10 @@ sudo ./obsidianctl backup-slot a --backup-dir /mnt/external/backups
 Restores a slot from a previous backup.
 
 *   `<slot>`: The slot to restore (`a` or `b`).
-*   `<backup_path>`: Path to the backup file (`.tar.gz`).
+*   `<backup_path>`: Path to the backup file (`.sfs`).
 
 ```bash
-sudo ./obsidianctl rollback-slot a /var/backups/obsidianctl/slot_a/slot_a_backup_20241201_143022.tar.gz
+sudo ./obsidianctl rollback-slot a /var/backups/obsidianctl/slot_a/slot_a_backup_20250823_143022.sfs
 ```
 
 #### `health-check`
