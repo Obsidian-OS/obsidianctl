@@ -3,20 +3,25 @@ def handle_mkobsidiansfs(args):
         os.system(f"mkobsidiansfs {args.system_sfs} system.sfs")
     else:
         if shutil.which("git"):
-            os.system(f"git clone https://github.com/Obsidian-OS/mkobsidiansfs/ /tmp/mkobsidiansfs;chmod u+x /tmp/mkobsidiansfs/mkobsidiansfs;/tmp/mkobsidiansfs/mkobsidiansfs {args.system_sfs} tmp_system.sfs")
+            os.system(
+                f"git clone https://github.com/Obsidian-OS/mkobsidiansfs/ /tmp/mkobsidiansfs;chmod u+x /tmp/mkobsidiansfs/mkobsidiansfs;/tmp/mkobsidiansfs/mkobsidiansfs {args.system_sfs} tmp_system.sfs"
+            )
         else:
-            print("No git or mkobsidiansfs found. Please install one of these to directly pass in an .mkobsfs.")
+            print(
+                "No git or mkobsidiansfs found. Please install one of these to directly pass in an .mkobsfs."
+            )
             sys.exit(1)
-    args.system_sfs="system.sfs"
+    args.system_sfs = "system.sfs"
     handle_install(args)
     os.remove("system.sfs")
-    
+
+
 def handle_install(args):
     checkroot()
     device = args.device
-    system_sfs = args.system_sfs or '/etc/system.sfs'
+    system_sfs = args.system_sfs or "/etc/system.sfs"
     _, ext = os.path.splitext(system_sfs)
-    if ext==".mkobsfs":
+    if ext == ".mkobsfs":
         handle_mkobsidiansfs(args)
         sys.exit()
     if args.dual_boot:
@@ -142,7 +147,9 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     os_release_path = "/etc/os-release"
     obsidianctl_dest = f"{mount_dir}/usr/bin/obsidianctl"
     if os.path.exists(f"{mount_dir}/obsidianctl-aur-installed"):
-        print("obsidianctl has been installed through the AUR. Skipping obsidianctl copy...")
+        print(
+            "obsidianctl has been installed through the AUR. Skipping obsidianctl copy..."
+        )
     else:
         run_command(f"mkdir -p {mount_dir}/usr/bin")
         run_command(f"cp {script_path} {obsidianctl_dest}")
@@ -157,12 +164,38 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
 
     if os.path.exists("/usr/share/pixmaps/obsidianos.png"):
         run_command(f"mkdir -p {mount_dir}/usr/share/pixmaps/")
-        run_command(f"cp /usr/share/pixmaps/obsidianos.png {mount_dir}/usr/share/pixmaps/obsidianos.png")
+        run_command(
+            f"cp /usr/share/pixmaps/obsidianos.png {mount_dir}/usr/share/pixmaps/obsidianos.png"
+        )
     else:
         print(
             f"Warning: ObsidianOS Logo file wasn't found. Skipping.",
             file=sys.stderr,
         )
+
+    
+    run_command(f"umount {mount_dir}/etc", check=False)
+
+    autostart_service_content = """[Unit]
+Description=Force start all enabled services before TTY login
+DefaultDependencies=no
+After=basic.target
+Before=getty.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'systemctl list-unit-files --state=enabled | awk \"{print $1}\" | grep -E ".service$" | xargs -r systemctl start'
+
+[Install]
+WantedBy=getty.target
+"""
+    
+    service_file_path = f"{mount_dir}/etc/systemd/system/obsidianos-autostart.service"
+    run_command(f"mkdir -p {os.path.dirname(service_file_path)}")
+    with open(service_file_path, "w") as f:
+        f.write(autostart_service_content)
+    run_command(f"systemctl enable obsidianos-autostart.service --root={mount_dir}")
+    run_command(f"mount /dev/disk/by-label/etc_ab {mount_dir}/etc")
     print("\nSlot 'a' is now configured and mounted.")
     chroot_confirm = input(
         "Do you want to chroot into slot 'a' to make changes before copying it to slot B? (y/N): "
@@ -185,7 +218,9 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     try:
         run_command(f"mount {part3} {source_mount_point}")
         run_command(f"mount {part4} {target_mount_point}")
-        run_command(f"rsync -aHAX --inplace --delete --info=progress2 {source_mount_point}/ {target_mount_point}/")
+        run_command(
+            f"rsync -aHAX --inplace --delete --info=progress2 {source_mount_point}/ {target_mount_point}/"
+        )
     finally:
         run_command(f"umount {source_mount_point}", check=False)
         run_command(f"umount {target_mount_point}", check=False)
@@ -213,7 +248,9 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     run_command(f"mkdir -p {esp_a_mount_dir}")
     try:
         run_command(f"mount {part1} {esp_a_mount_dir}")
-        run_command(f"bootctl --esp-path={esp_a_mount_dir} --efi-boot-option-description=\"ObsidianOS (Slot A)\" install")
+        run_command(
+            f'bootctl --esp-path={esp_a_mount_dir} --efi-boot-option-description="ObsidianOS (Slot A)" install'
+        )
     finally:
         run_command(f"umount {esp_a_mount_dir}", check=False)
         run_command(f"rm -r {esp_a_mount_dir}", check=False)
@@ -223,7 +260,9 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
     run_command(f"mkdir -p {esp_b_mount_dir}")
     try:
         run_command(f"mount {part2} {esp_b_mount_dir}")
-        run_command(f"bootctl --esp-path={esp_b_mount_dir} --efi-boot-option-description=\"ObsidianOS (Slot B)\" install")
+        run_command(
+            f'bootctl --esp-path={esp_b_mount_dir} --efi-boot-option-description="ObsidianOS (Slot B)" install'
+        )
     finally:
         run_command(f"umount {esp_b_mount_dir}", check=False)
         run_command(f"rm -r {esp_b_mount_dir}", check=False)
