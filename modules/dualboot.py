@@ -161,6 +161,34 @@ LABEL=home_ab /home  ext4  defaults,noatime 0 2
             f"Warning: ObsidianOS Logo file wasn't found. Skipping.",
             file=sys.stderr,
         )
+    
+    run_command(f"umount {mount_dir}/etc", check=False)
+
+    autostart_service_content = """[Unit]
+Description=Force start all enabled services before TTY login
+DefaultDependencies=no
+After=basic.target
+Before=getty.target
+
+[Service]
+Type=oneshot
+ExecStart=/bin/sh -c 'systemctl list-unit-files --state=enabled | awk \"{print $1}\" | grep -E ".service$" | xargs -r systemctl start'
+
+[Install]
+WantedBy=getty.target
+"""
+    
+    service_file_path = f"{mount_dir}/etc/systemd/system/obsidianos-autostart.service"
+    run_command(f"mkdir -p {os.path.dirname(service_file_path)}")
+    with open(service_file_path, "w") as f:
+        f.write(autostart_service_content)
+
+    
+    run_command(f"systemctl enable obsidianos-autostart.service --root={mount_dir}")
+
+    
+    run_command(f"mount /dev/disk/by-label/etc_ab {mount_dir}/etc")
+
     print("\nSlot 'a' is now configured and mounted.")
     chroot_confirm = input(
         "Do you want to chroot into slot 'a' to make changes before copying it to slot B? (y/N): "
