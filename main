@@ -89,6 +89,9 @@ def main():
     parser_update.add_argument(
         "system_sfs", help="Path to the new SquashFS system image."
     )
+    parser_update.add_argument(
+        "--switch", action="store_true", help="Switch to the updated slot after updating."
+    )
     parser_update.set_defaults(func=handle_update)
 
     parser_sync = subparsers.add_parser(
