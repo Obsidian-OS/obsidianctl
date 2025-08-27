@@ -104,9 +104,10 @@ def handle_rollback_slot(args):
     mount_dir = f"/mnt/obsidian_rollback_{slot}"
     run_command(f"mkdir -p {mount_dir}")
     try:
+        fstype=subprocess.run(["blkid","-s","TYPE","-o","value",subprocess.run(["findmnt","-no","SOURCE","/"],capture_output=True,text=True).stdout.strip()],capture_output=True,text=True).stdout.strip()
         run_command(f"umount {part_path}", check=False)
         print(f"Formatting partition {part_path}...")
-        run_command(f"mkfs.ext4 -F {part_path}")
+        run_command(f"mkfs.{fstype} -F {part_path}")
         run_command(f"mount {part_path} {mount_dir}")
 
         print("Extracting backup...")

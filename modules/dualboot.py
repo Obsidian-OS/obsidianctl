@@ -1,5 +1,8 @@
 def handle_dual_boot(args):
     checkroot()
+    fstype="ext4"
+    if args.use_f2fs:
+        fstype="f2fs"
     device = args.device
     system_sfs = args.system_sfs
 
@@ -61,11 +64,11 @@ label: gpt
     format_commands = [
         f"mkfs.fat -F32 -n ESP_A {part1}",
         f"mkfs.fat -F32 -n ESP_B {part2}",
-        f"mkfs.ext4 -F -L root_a {part3}",
-        f"mkfs.ext4 -F -L root_b {part4}",
-        f"mkfs.ext4 -F -L etc_ab {part5}",
-        f"mkfs.ext4 -F -L var_ab {part6}",
-        f"mkfs.ext4 -F -L home_ab {part7}",
+        f"mkfs.{fstype} -F -L root_a {part3}",
+        f"mkfs.{fstype} -F -L root_b {part4}",
+        f"mkfs.{fstype} -F -L etc_ab {part5}",
+        f"mkfs.{fstype} -F -L var_ab {part6}",
+        f"mkfs.{fstype} -F -L home_ab {part7}",
     ]
     for cmd in format_commands:
         run_command(cmd)
@@ -78,11 +81,11 @@ label: gpt
     run_command(f"unsquashfs -f -d {mount_dir} -no-xattrs {system_sfs}")
     print("Generating fstab for slot 'a'...")
     fstab_content_a = """
-LABEL=root_a  /      ext4  defaults,noatime 0 1
+LABEL=root_a  /      {fstype}  defaults,noatime 0 1
 LABEL=ESP_A     /boot  vfat  defaults,noatime 0 2
-LABEL=etc_ab  /etc   ext4  defaults,noatime 0 2
-LABEL=var_ab  /var   ext4  defaults,noatime 0 2
-LABEL=home_ab /home  ext4  defaults,noatime 0 2
+LABEL=etc_ab  /etc   {fstype}  defaults,noatime 0 2
+LABEL=var_ab  /var   {fstype}  defaults,noatime 0 2
+LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
 """
     with open(f"{mount_dir}/etc/fstab", "w") as f:
         f.write(fstab_content_a.strip())
