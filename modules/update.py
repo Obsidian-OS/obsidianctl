@@ -13,6 +13,7 @@ def handle_update_mkobsidiansfs(args):
     
 def handle_update(args):
     checkroot()
+    fstype=subprocess.run(["blkid","-s","TYPE","-o","value",subprocess.run(["findmnt","-no","SOURCE","/"],capture_output=True,text=True).stdout.strip()],capture_output=True,text=True).stdout.strip()
     slot = args.slot
     system_sfs = args.system_sfs
     if not os.path.exists(system_sfs):
@@ -31,7 +32,7 @@ def handle_update(args):
         print("Operation Canceled.")
         exit(1)
     print("Formatting partition...")
-    run_command(f"mkfs.ext4 -F -L {target_label} /dev/disk/by-label/{target_label}")
+    run_command(f"mkfs.{fstype} -F -L {target_label} /dev/disk/by-label/{target_label}")
     mount_dir = f"/mnt/obsidian_update_{slot}"
     run_command(f"mkdir -p {mount_dir}")
     try:
@@ -41,11 +42,11 @@ def handle_update(args):
         run_command(f"unsquashfs -f -d {mount_dir} -no-xattrs {system_sfs}")
         print(f"Generating fstab for slot '{slot}'...")
         fstab_content = f"""
-LABEL={target_label}  /      ext4  defaults,noatime 0 1
+LABEL={target_label}  /      {fstype}  defaults,noatime 0 1
 LABEL={esp_label}     /boot  vfat  defaults,noatime 0 2
-LABEL=etc_ab  /etc   ext4  defaults,noatime 0 2
-LABEL=var_ab  /var   ext4  defaults,noatime 0 2
-LABEL=home_ab /home  ext4  defaults,noatime 0 2
+LABEL=etc_ab  /etc   {fstype}  defaults,noatime 0 2
+LABEL=var_ab  /var   {fstype}  defaults,noatime 0 2
+LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
 """
         fstab_path = f"{mount_dir}/etc/fstab"
         if not os.path.exists(os.path.dirname(fstab_path)):
