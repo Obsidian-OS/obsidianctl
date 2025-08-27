@@ -3,24 +3,42 @@ def handle_update_mkobsidiansfs(args):
         os.system(f"mkobsidiansfs {args.system_sfs} system.sfs")
     else:
         if shutil.which("git"):
-            os.system(f"git clone https://github.com/Obsidian-OS/mkobsidiansfs/ /tmp/mkobsidiansfs;chmod u+x /tmp/mkobsidiansfs/mkobsidiansfs;/tmp/mkobsidiansfs/mkobsidiansfs {args.system_sfs} tmp_system.sfs")
+            os.system(
+                f"git clone https://github.com/Obsidian-OS/mkobsidiansfs/ /tmp/mkobsidiansfs;chmod u+x /tmp/mkobsidiansfs/mkobsidiansfs;/tmp/mkobsidiansfs/mkobsidiansfs {args.system_sfs} tmp_system.sfs"
+            )
         else:
-            print("No git or mkobsidiansfs found. Please install one of these to directly pass in an .mkobsfs.")
+            print(
+                "No git or mkobsidiansfs found. Please install one of these to directly pass in an .mkobsfs."
+            )
             sys.exit(1)
-    args.system_sfs="system.sfs"
+    args.system_sfs = "system.sfs"
     handle_update(args)
     os.remove("system.sfs")
-    
+
+
 def handle_update(args):
     checkroot()
-    fstype=subprocess.run(["blkid","-s","TYPE","-o","value",subprocess.run(["findmnt","-no","SOURCE","/"],capture_output=True,text=True).stdout.strip()],capture_output=True,text=True).stdout.strip()
+    fstype = subprocess.run(
+        [
+            "blkid",
+            "-s",
+            "TYPE",
+            "-o",
+            "value",
+            subprocess.run(
+                ["findmnt", "-no", "SOURCE", "/"], capture_output=True, text=True
+            ).stdout.strip(),
+        ],
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
     slot = args.slot
     system_sfs = args.system_sfs
     if not os.path.exists(system_sfs):
         print(f"Error: System image '{system_sfs}' not found.", file=sys.stderr)
         sys.exit(1)
     _, ext = os.path.splitext(system_sfs)
-    if ext==".mkobsfs":
+    if ext == ".mkobsfs":
         handle_update_mkobsidiansfs(args)
         sys.exit()
     target_label = f"root_{slot}"
@@ -79,3 +97,6 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
 
     print(f"Update for slot '{slot}' complete!")
     print("You may need to switch to this slot and reboot to use the updated system.")
+    if args.switch:
+        print(f"Switching the active slot to {slot.upper()}")
+        run_command(f"obsidianctl switch {slot}", check=False)
