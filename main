@@ -23,6 +23,7 @@ def main():
     parser_install.add_argument("--var-size", default="5G", help="Size of the shared var partition.")
     parser_install.add_argument("--esp-size", default="512M", help="Size of the ESP partitions for slots a and b.")
     parser_install.add_argument("--dual-boot", action="store_true", help="Setup a dual-boot configuration. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
+    parser_install.add_argument("--use-f2fs", action="store_true", help="Setup an f2fs configuration. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
     parser_install.set_defaults(func=handle_install)
     parser_switchonce = subparsers.add_parser(
       "switch-once", help="Switch active boot slot to 'a' or 'b' once only."
