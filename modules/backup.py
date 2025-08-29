@@ -14,10 +14,10 @@ def handle_backup_slot(args):
     if full_backup:
         print("FULL backup enabled.")
     part_path = f"/dev/disk/by-label/root_{slot}"
-     esp_path = f"/dev/disk/by-label/ESP_{slot}"
+    esp_path  = f"/dev/disk/by-label/ESP_{slot}"
     home_path =  "/dev/disk/by-label/home_ab"
-     etc_path =  "/dev/disk/by-label/etc_ab"
-     var_path =  "/dev/disk/by-label/var_ab"
+    etc_path  =  "/dev/disk/by-label/etc_ab"
+    var_path  =  "/dev/disk/by-label/var_ab"
     if not os.path.exists(part_path):
         print(
             f"Error: Slot '{slot}' not found. Was the system installed with obsidianctl?",
