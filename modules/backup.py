@@ -1,7 +1,6 @@
 import os
 import sys
 import shutil
-import tarfile
 from datetime import datetime
 import json
 import subprocess
