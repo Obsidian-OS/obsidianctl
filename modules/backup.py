@@ -9,8 +9,15 @@ def handle_backup_slot(args):
     checkroot()
     slot = args.slot
     backup_dir = args.backup_dir or f"/var/backups/obsidianctl/slot_{slot}"
+    full_backup = args.full_backup
     print(f"Creating backup of slot '{slot}'...")
+    if full_backup:
+        print("FULL backup enabled.")
     part_path = f"/dev/disk/by-label/root_{slot}"
+     esp_path = f"/dev/disk/by-label/ESP_{slot}"
+    home_path =  "/dev/disk/by-label/home_ab"
+     etc_path =  "/dev/disk/by-label/etc_ab"
+     var_path =  "/dev/disk/by-label/var_ab"
     if not os.path.exists(part_path):
         print(
             f"Error: Slot '{slot}' not found. Was the system installed with obsidianctl?",
@@ -26,6 +33,11 @@ def handle_backup_slot(args):
     run_command(f"mkdir -p {mount_dir}")
     try:
         run_command(f"mount {part_path} {mount_dir}")
+        if full_backup:
+            run_command(f"mount {var_path}  {mount_dir}/var" )
+            run_command(f"mount {etc_path}  {mount_dir}/etc" )
+            run_command(f"mount {esp_path}  {mount_dir}/boot")
+            run_command(f"mount {home_path} {mount_dir/home}")
         print(f"Creating backup archive at {backup_path}.sfs...")
         run_command(
             f"mksquashfs {mount_dir} {backup_path}.sfs -comp xz -noappend -wildcards -e proc/* sys/* dev/* run/* tmp/* mnt/* media/* lost+found"
@@ -66,8 +78,8 @@ def handle_backup_slot(args):
         print(f"Size: {metadata['size'] / (1024*1024):.1f} MB")
 
     finally:
-        run_command(f"umount {mount_dir}", check=False)
-        run_command(f"rmdir {mount_dir}", check=False)
+        run_command(f"umount -R{mount_dir}", check=False)
+        run_command(f"rm -rf {mount_dir}", check=False)
 
 
 def handle_rollback_slot(args):
