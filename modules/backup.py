@@ -14,7 +14,7 @@ def handle_backup_slot(args):
     if full_backup:
         print("FULL backup enabled.")
     part_path = f"/dev/disk/by-label/root_{slot}"
-    esp_path  = f"/dev/disk/by-label/ESP_{slot}"
+    esp_path  = f"/dev/disk/by-label/ESP_{slot.upper()}"
     home_path =  "/dev/disk/by-label/home_ab"
     etc_path  =  "/dev/disk/by-label/etc_ab"
     var_path  =  "/dev/disk/by-label/var_ab"
@@ -37,7 +37,7 @@ def handle_backup_slot(args):
             run_command(f"mount {var_path}  {mount_dir}/var" )
             run_command(f"mount {etc_path}  {mount_dir}/etc" )
             run_command(f"mount {esp_path}  {mount_dir}/boot")
-            run_command(f"mount {home_path} {mount_dir/home}")
+            run_command(f"mount {home_path} {mount_dir}/home")
         print(f"Creating backup archive at {backup_path}.sfs...")
         run_command(
             f"mksquashfs {mount_dir} {backup_path}.sfs -comp xz -noappend -wildcards -e proc/* sys/* dev/* run/* tmp/* mnt/* media/* lost+found"
@@ -98,7 +98,6 @@ def handle_rollback_slot(args):
         sys.exit(1)
 
     print(f"Rolling back slot '{slot}' from backup: {backup_path}")
-
     part_path = f"/dev/disk/by-label/root_{slot}"
     if not os.path.exists(part_path):
         print(
@@ -121,10 +120,8 @@ def handle_rollback_slot(args):
         print(f"Formatting partition {part_path}...")
         run_command(f"mkfs.{fstype} -F {part_path}")
         run_command(f"mount {part_path} {mount_dir}")
-
         print("Extracting backup...")
         run_command(f"unsquashfs -d {mount_dir} {backup_path}")
-
         fstab_path = os.path.join(mount_dir, "etc/fstab")
         if os.path.exists(fstab_path):
             with open(fstab_path, "r") as f:
