@@ -140,7 +140,7 @@ def handle_rollback_slot(args):
             fstype = "ext4"
             print(f"Warning: Could not determine filesystem type for root partition. Defaulting to {fstype} for formatting.")
 
-        run_command(f"umount {part_path}", check=False)
+        run_command(f"umount {part_path}", check=True)
         print(f"Formatting root partition {part_path} with {fstype} and label root_{slot}...")
         run_command(f"mkfs.{fstype} -F {part_path} -L root_{slot}")
         run_command(f"mount {part_path} {mount_dir}")
@@ -161,7 +161,7 @@ def handle_rollback_slot(args):
                     print(f"Restoring {name} partition {p_path}...")
                     confirm_part = input(f"Are you sure you want to format and restore {name} partition {p_path}? (y/N): ")
                     if confirm_part.lower() == "y":
-                        run_command(f"umount {p_path}", check=False)
+                        run_command(f"umount {p_path}", check=True)
                         part_fstype_result = subprocess.run(["blkid","-s","TYPE","-o","value",p_path],capture_output=True,text=True)
                         part_fstype = part_fstype_result.stdout.strip()
                         if not part_fstype:
@@ -212,7 +212,7 @@ def handle_rollback_slot(args):
 
         print(f"Rollback completed successfully!")
     finally:
-        run_command(f"umount -R {mount_dir}", check=False)
+        run_command(f"umount -R {mount_dir}", check=True)
         run_command(f"rmdir {mount_dir}", check=False)
         run_command(f"rm -rf {temp_extract_dir}", check=False)
 
