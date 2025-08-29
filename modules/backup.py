@@ -78,7 +78,7 @@ def handle_backup_slot(args):
         print(f"Size: {metadata['size'] / (1024*1024):.1f} MB")
 
     finally:
-        run_command(f"umount -R{mount_dir}", check=False)
+        run_command(f"umount -R {mount_dir}", check=True)
         run_command(f"rm -rf {mount_dir}", check=False)
 
 
