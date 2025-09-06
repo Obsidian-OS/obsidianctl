@@ -91,7 +91,7 @@ label: gpt
     print("Generating fstab for slot 'a'...")
     fstab_content_a = f"""
 {lordo('root_a', device)}  /      {fstype}  defaults,noatime 0 1
-{lordo('esp_a', device)}     /boot  vfat  defaults,noatime 0 2
+{lordo('ESP_A', device)}     /boot  vfat  defaults,noatime 0 2
 {lordo('etc_ab', device)}  /etc   {fstype}  defaults,noatime 0 2
 {lordo('var_ab', device)}  /var   {fstype}  defaults,noatime 0 2
 {lordo('home_ab', device)} /home  {fstype}  defaults,noatime 0 2
@@ -239,7 +239,7 @@ WantedBy=getty.target
             run_command(f"mkdir -p {os.path.dirname(fstab_b_path)}")
             fstab_content_b = f"""
 {lordo('root_b', device)}  /      {fstype}  defaults,noatime 0 1
-{lordo('esp_b', device)}     /boot  vfat  defaults,noatime 0 2
+{lordo('ESP_B', device)}     /boot  vfat  defaults,noatime 0 2
 {lordo('etc_ab', device)}  /etc   {fstype}  defaults,noatime 0 2
 {lordo('var_ab', device)}  /var   {fstype}  defaults,noatime 0 2
 {lordo('home_ab', device)} /home  {fstype}  defaults,noatime 0 2
