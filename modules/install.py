@@ -11,9 +11,9 @@ def handle_mkobsidiansfs(args):
                 "No git or mkobsidiansfs found. Please install one of these to directly pass in an .mkobsfs."
             )
             sys.exit(1)
-    args.system_sfs = "system.sfs"
+    args.system_sfs = "tmp_system.sfs"
     handle_install(args)
-    os.remove("system.sfs")
+    os.remove("tmp_system.sfs")
 
 
 def handle_install(args):
@@ -237,15 +237,14 @@ WantedBy=getty.target
         fstab_b_path = f"{mount_b_dir}/etc/fstab"
         if not os.path.exists(os.path.dirname(fstab_b_path)):
             run_command(f"mkdir -p {os.path.dirname(fstab_b_path)}")
-            fstab_content_b = f"""
+        with open(fstab_b_path, "w") as f:
+            f.write(f"""
 {lordo('root_b', device)}  /      {fstype}  defaults,noatime 0 1
 {lordo('ESP_B', device)}     /boot  vfat  defaults,noatime 0 2
 {lordo('etc_ab', device)}  /etc   {fstype}  defaults,noatime 0 2
 {lordo('var_ab', device)}  /var   {fstype}  defaults,noatime 0 2
 {lordo('home_ab', device)} /home  {fstype}  defaults,noatime 0 2
-"""
-        with open(fstab_b_path, "w") as f:
-            f.write(fstab_content_b)
+""")
     finally:
         run_command(f"umount {mount_b_dir}", check=False)
         run_command(f"rm -r {mount_b_dir}", check=False)
