@@ -46,6 +46,9 @@ def main():
     parser_backup.add_argument(
         "--backup-dir", help="Directory to store backups (default: /var/backups/obsidianctl/slot_X)."
     )
+    parser_backup.add_argument(
+        "--device", help="Drive (not partition) to backup (default: current drive)."
+    )
     parser_backup.add_argument("--full-backup", action="store_true", help="Backup your ENTIRE SYSTEM. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
     parser_backup.set_defaults(func=handle_backup_slot)
     
@@ -57,6 +60,9 @@ def main():
     )
     parser_rollback.add_argument(
         "backup_path", help="Path to the backup file (.sfs)."
+    )
+    parser_rollback.add_argument(
+        "--device", help="Drive (not partition) to rollback (default: current drive)."
     )
     parser_rollback.set_defaults(func=handle_rollback_slot)
     
