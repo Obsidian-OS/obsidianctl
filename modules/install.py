@@ -85,16 +85,16 @@ label: gpt
     mount_dir = "/mnt/obsidian_install"
     run_command(f"mkdir -p {mount_dir}")
     print("Mounting root partition for slot 'a'...")
-    run_command(f"mount /dev/disk/by-label/root_a {mount_dir}")
+    run_command(f"mount {lordo('root_a', device)} {mount_dir}")
     print(f"Extracting system from {system_sfs} to slot 'a'...")
     run_command(f"unsquashfs -f -d {mount_dir} -no-xattrs {system_sfs}")
     print("Generating fstab for slot 'a'...")
     fstab_content_a = f"""
-LABEL=root_a  /      {fstype}  defaults,noatime 0 1
-LABEL=ESP_A     /boot  vfat  defaults,noatime 0 2
-LABEL=etc_ab  /etc   {fstype}  defaults,noatime 0 2
-LABEL=var_ab  /var   {fstype}  defaults,noatime 0 2
-LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
+{lordo('root_a', device)}  /      {fstype}  defaults,noatime 0 1
+{lordo('esp_a', device)}     /boot  vfat  defaults,noatime 0 2
+{lordo('etc_ab', device)}  /etc   {fstype}  defaults,noatime 0 2
+{lordo('var_ab', device)}  /var   {fstype}  defaults,noatime 0 2
+{lordo('home_ab', device)} /home  {fstype}  defaults,noatime 0 2
 """
     with open(f"{mount_dir}/etc/fstab", "w") as f:
         f.write(fstab_content_a.strip())
@@ -105,7 +105,7 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
         tmp_mount_dir = f"/mnt/tmp_{fs_dir}"
         run_command(f"mkdir -p {tmp_mount_dir}")
         try:
-            run_command(f"mount /dev/disk/by-label/{part_label} {tmp_mount_dir}")
+            run_command(f"mount {lordo(part_label, device)} {tmp_mount_dir}")
             run_command(f"rsync -aK --delete {mount_dir}/{fs_dir}/ {tmp_mount_dir}/")
         finally:
             run_command(f"umount {tmp_mount_dir}", check=False)
@@ -115,7 +115,7 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
     esp_tmp_mount = "/mnt/obsidian_esp_tmp"
     run_command(f"mkdir -p {esp_tmp_mount}")
     try:
-        run_command(f"mount /dev/disk/by-label/ESP_A {esp_tmp_mount}")
+        run_command(f"mount {lordo('ESP_A', device)} {esp_tmp_mount}")
         run_command(f"rsync -aK --delete {mount_dir}/boot/ {esp_tmp_mount}/")
     finally:
         run_command(f"umount {esp_tmp_mount}", check=False)
@@ -125,7 +125,7 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
     esp_b_tmp_mount = "/mnt/obsidian_esp_b_tmp"
     run_command(f"mkdir -p {esp_b_tmp_mount}")
     try:
-        run_command(f"mount /dev/disk/by-label/ESP_B {esp_b_tmp_mount}")
+        run_command(f"mount {lordo('ESP_B', device)} {esp_b_tmp_mount}")
         run_command(f"rsync -aK --delete {mount_dir}/boot/ {esp_b_tmp_mount}/")
     finally:
         run_command(f"umount {esp_b_tmp_mount}", check=False)
@@ -137,10 +137,10 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
         f"mkdir -p {mount_dir}/etc",
         f"mkdir -p {mount_dir}/var",
         f"mkdir -p {mount_dir}/home",
-        f"mount /dev/disk/by-label/ESP_A {mount_dir}/boot",
-        f"mount /dev/disk/by-label/etc_ab {mount_dir}/etc",
-        f"mount /dev/disk/by-label/var_ab {mount_dir}/var",
-        f"mount /dev/disk/by-label/home_ab {mount_dir}/home",
+        f"mount {lordo('ESP_A', device)} {mount_dir}/boot",
+        f"mount {lordo('etc_ab', device)} {mount_dir}/etc",
+        f"mount {lordo('var_ab', device)} {mount_dir}/var",
+        f"mount {lordo('home_ab', device)} {mount_dir}/home",
     ]
     for cmd in mount_commands:
         run_command(cmd)
@@ -198,7 +198,7 @@ WantedBy=getty.target
     with open(service_file_path, "w") as f:
         f.write(autostart_service_content)
     run_command(f"systemctl enable obsidianos-autostart.service --root={mount_dir}")
-    run_command(f"mount /dev/disk/by-label/etc_ab {mount_dir}/etc")
+    run_command(f"mount {lordo('etc_ab', device)} {mount_dir}/etc")
     print("\nSlot 'a' is now configured and mounted.")
     chroot_confirm = input(
         "Do you want to chroot into slot 'a' to make changes before copying it to slot B? (y/N): "
@@ -237,9 +237,13 @@ WantedBy=getty.target
         fstab_b_path = f"{mount_b_dir}/etc/fstab"
         if not os.path.exists(os.path.dirname(fstab_b_path)):
             run_command(f"mkdir -p {os.path.dirname(fstab_b_path)}")
-        fstab_content_b = fstab_content_a.replace(
-            "LABEL=root_a", "LABEL=root_b"
-        ).replace("LABEL=ESP_A", "LABEL=ESP_B")
+            fstab_content_b = f"""
+{lordo('root_b', device)}  /      {fstype}  defaults,noatime 0 1
+{lordo('esp_b', device)}     /boot  vfat  defaults,noatime 0 2
+{lordo('etc_ab', device)}  /etc   {fstype}  defaults,noatime 0 2
+{lordo('var_ab', device)}  /var   {fstype}  defaults,noatime 0 2
+{lordo('home_ab', device)} /home  {fstype}  defaults,noatime 0 2
+"""
         with open(fstab_b_path, "w") as f:
             f.write(fstab_content_b)
     finally:
