@@ -5,6 +5,24 @@ import os
 import subprocess
 import re
 
+def lordo(label, disk=None):  # LORDO = LABEL On Root Disk Only, returns /dev/disk/by-uuid/UUID
+    root_part = subprocess.check_output(["findmnt", "-no", "SOURCE", "/"], text=True).strip()
+    if disk is None:
+        disk_name = subprocess.check_output(['lsblk', '-no', 'PKNAME', root_part], text=True).strip()
+        disk = f"/dev/{disk_name}"
+    parts = subprocess.check_output(
+        ["lsblk", "-o", "NAME,LABEL,UUID", "-l", disk], text=True
+    ).splitlines()
+    for p in parts:
+        fields = p.split(None, 2)  # NAME, LABEL, UUID
+        if len(fields) < 3:
+            continue
+        name, lbl, uuid = fields
+        if lbl.strip() == label:
+            return f"/dev/disk/by-uuid/{uuid}"
+
+    return None
+
 def check_dependencies(commands):
     commands.extend(["curl", "tar", "mksquashfs", "unsquashfs"])
     for command in commands:

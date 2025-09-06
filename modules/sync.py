@@ -25,18 +25,10 @@ def handle_sync(args):
     source_esp_label = f"ESP_{current_slot.upper()}"
     target_esp_label = f"ESP_{target_slot.upper()}"
     try:
-        source_root_dev = run_command(
-            f"findfs LABEL={source_root_label}", capture_output=True
-        ).stdout.strip()
-        target_root_dev = run_command(
-            f"findfs LABEL={target_root_label}", capture_output=True
-        ).stdout.strip()
-        source_esp_dev = run_command(
-            f"findfs LABEL={source_esp_label}", capture_output=True
-        ).stdout.strip()
-        target_esp_dev = run_command(
-            f"findfs LABEL={target_esp_label}", capture_output=True
-        ).stdout.strip()
+        source_root_dev = lordo(source_root_label)
+        target_root_dev = lordo(target_root_label)
+        source_esp_dev  = lordo(source_esp_label )
+        target_esp_dev  = lordo(target_esp_label )
     except subprocess.CalledProcessError as e:
         print(f"Error: Could not find partitions by label. {e}", file=sys.stderr)
         sys.exit(1)
