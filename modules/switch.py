@@ -2,8 +2,8 @@ def handle_switch(args):
     checkroot()
     slot = args.slot
     print(f"Switching active boot slot to '{slot}'...")
-    esp_a_path = "/dev/disk/by-label/ESP_A"
-    esp_b_path = "/dev/disk/by-label/ESP_B"
+    esp_a_path = lordo("ESP_A")
+    esp_b_path = lordo("ESP_B")
     if not os.path.exists(esp_a_path) or not os.path.exists(esp_b_path):
         print(
             "ESP partitions not found. Was the system installed with obsidianctl?",
@@ -38,8 +38,8 @@ def handle_switchonce(args):
     checkroot()
     slot = args.slot
     print(f"Switching active boot slot to '{slot}' temporarily...")
-    esp_a_path = "/dev/disk/by-label/ESP_A"
-    esp_b_path = "/dev/disk/by-label/ESP_B"
+    esp_a_path = lordo("ESP_A")
+    esp_b_path = lordo("ESP_B")
     if not os.path.exists(esp_a_path) or not os.path.exists(esp_b_path):
         print(
             "ESP partitions not found. Was the system installed with obsidianctl?",
