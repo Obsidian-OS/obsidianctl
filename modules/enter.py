@@ -12,8 +12,8 @@ def handle_enter(args):
     slot = args.slot
     root_label = f"root_{slot}"
     esp_label = f"ESP_{slot.upper()}"
-    root_partition = f"/dev/disk/by-label/{root_label}"
-    esp_partition = f"/dev/disk/by-label/{esp_label}"
+    root_partition = lordo(root_label)
+    esp_partition = lordo(esp_label)
     mount_point = f"/mnt/obsidian_{slot}"
     if not os.path.exists(root_partition):
         print(f"Root partition for slot {slot} ({root_partition}) not found.", file=sys.stderr)
@@ -30,7 +30,7 @@ def handle_enter(args):
         subprocess.run(["mount", esp_partition, f"{mount_point}/boot", "--mkdir"], check=True)
 
         for shared_part in ["etc_ab", "var_ab", "home_ab"]:
-            shared_partition = f"/dev/disk/by-label/{shared_part}"
+            shared_partition = lordo(shared_part)
             if os.path.exists(shared_partition):
                 fs_dir = shared_part.split("_")[0]
                 target_mount = os.path.join(mount_point, fs_dir)

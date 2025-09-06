@@ -6,8 +6,8 @@ def handle_slot_diff(args):
     mount_inactive = f"/mnt/obsidian_slot_{inactive}"
     os.makedirs(mount_current, exist_ok=True)
     os.makedirs(mount_inactive, exist_ok=True)
-    part_current = f"/dev/disk/by-label/root_{current}"
-    part_inactive = f"/dev/disk/by-label/root_{inactive}"
+    part_current = lordo(f"root_{current}")
+    part_inactive = lordo(f"root_{inactive}")
     run_command(f"mount {part_current} {mount_current}")
     run_command(f"mount {part_inactive} {mount_inactive}")
     kernel_current = "unknown"
