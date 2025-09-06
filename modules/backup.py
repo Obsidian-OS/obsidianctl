@@ -8,15 +8,16 @@ def handle_backup_slot(args):
     checkroot()
     slot = args.slot
     backup_dir = args.backup_dir or f"/var/backups/obsidianctl/slot_{slot}"
+    device = args.device or None
     full_backup = args.full_backup
     print(f"Creating backup of slot '{slot}'...")
     if full_backup:
         print("FULL backup enabled.")
-    part_path = f"/dev/disk/by-label/root_{slot}"
-    esp_path  = f"/dev/disk/by-label/ESP_{slot.upper()}"
-    home_path =  "/dev/disk/by-label/home_ab"
-    etc_path  =  "/dev/disk/by-label/etc_ab"
-    var_path  =  "/dev/disk/by-label/var_ab"
+    part_path = lordo(f"root_{slot}", device)
+    esp_path  = lordo(f"ESP_{slot.upper()}", device)
+    home_path = lordo(f"home_ab", device)
+    etc_path  = lordo(f"etc_ab", device)
+    var_path  = lordo(f"var_ab", device)
     if not os.path.exists(part_path):
         print(
             f"Error: Slot '{slot}' not found. Was the system installed with obsidianctl?",
@@ -107,11 +108,11 @@ def handle_rollback_slot(args):
             print(f"Warning: Could not read metadata from {metadata_path}. Assuming not a full backup.", file=sys.stderr)
 
     print(f"Rolling back slot '{slot}' from backup: {backup_path}")
-    part_path = f"/dev/disk/by-label/root_{slot}"
-    esp_path  = f"/dev/disk/by-label/ESP_{slot.upper()}"
-    home_path =  "/dev/disk/by-label/home_ab"
-    etc_path  =  "/dev/disk/by-label/etc_ab"
-    var_path  =  "/dev/disk/by-label/var_ab"
+    part_path = lordo(f"root_{slot}", device)
+    esp_path  = lordo(f"ESP_{slot.upper()}", device)
+    home_path = lordo(f"home_ab", device)
+    etc_path  = lordo(f"etc_ab", device)
+    var_path  = lordo(f"var_ab", device)
     if not os.path.exists(part_path):
         print(
             f"Error: Slot '{slot}' not found. Was the system installed with obsidianctl?",
