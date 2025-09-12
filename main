@@ -138,6 +138,21 @@ def main():
         "--break-system", action="store_true", help="Forcibly update even if not using an default system.sfs."
     )
     parser_netupdate.set_defaults(func=handle_netupdate)
+
+    ext_parser = subparsers.add_parser("ext", help="Manage ObsidianOS extensions.")
+    ext_subparsers = ext_parser.add_subparsers(dest="ext_command", required=True)
+
+    ext_add_parser = ext_subparsers.add_parser("add", help="Add an ObsidianOS extension.")
+    ext_add_parser.add_argument("path", help="Path to the .obsiext file.")
+    ext_add_parser.set_defaults(func=handle_ext)
+
+    ext_rm_parser = ext_subparsers.add_parser("rm", help="Remove an ObsidianOS extension.")
+    ext_rm_parser.add_argument("name", help="Name of the extension to remove.")
+    ext_rm_parser.set_defaults(func=handle_ext)
+
+    ext_list_parser = ext_subparsers.add_parser("list", help="List installed ObsidianOS extensions.")
+    ext_list_parser.set_defaults(func=handle_ext)
+
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)

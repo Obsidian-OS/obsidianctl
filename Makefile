@@ -26,6 +26,8 @@ build:
 	echo -e "\n" >> obsidianctl
 	cat ./modules/health.py >> obsidianctl
 	echo -e "\n" >> obsidianctl
+	cat ./modules/obsiext.py >> obsidianctl
+	echo -e "\n" >> obsidianctl
 	cat ./main >> obsidianctl
 	chmod +x obsidianctl
 
