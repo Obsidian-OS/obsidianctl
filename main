@@ -153,6 +153,12 @@ def main():
     ext_list_parser = ext_subparsers.add_parser("list", help="List installed ObsidianOS extensions.")
     ext_list_parser.set_defaults(func=handle_ext)
 
+    ext_enable_parser = ext_subparsers.add_parser("enable", help="Enable ObsidianOS Overlays on boot.")
+    ext_enable_parser.set_defaults(func=handle_ext)
+
+    ext_disable_parser = ext_subparsers.add_parser("disable", help="Disable ObsidianOS Overlays on boot.")
+    ext_disable_parser.set_defaults(func=handle_ext)
+
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)

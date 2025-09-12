@@ -5,6 +5,9 @@ OVERLAYS_CONF_PATH = "/etc/obsidianos-overlays.conf"
 LIB_OVERLAYS_SO = "/usr/lib/libobsidianos_overlays.so"
 FSTAB_MARKER_PREFIX = "# OBSIDIANOS_EXT:"
 OVERLAYS_MARKER_PREFIX = "# OBSIDIANOS_EXT:"
+ENVIRONMENT_FILE = "/etc/environment"
+LD_PRELOAD_LINE = "LD_PRELOAD=/usr/lib/libobsidianos_overlays.so"
+ENVIRONMENT_MARKER = "# OBSIDIANOS_OVERLAYS"
 
 
 def _check_lib_exists():
@@ -131,7 +134,7 @@ def handle_list_extensions(args):
     fstab_lines = _read_file_lines(FSTAB_PATH)
     fstab_exts = set()
     for line in fstab_lines:
-        match = re.search(rf"{FSTAB_MARKER_PREFIX}([\w\d\-\_]+)", line)
+        match = re.search(rf"{FSTAB_MARKER_PREFIX}([\\w\\d\\-\\_]+)", line)
         if match:
             fstab_exts.add(match.group(1))
 
@@ -145,6 +148,53 @@ def handle_list_extensions(args):
         print(f"- {ext}")
 
 
+def handle_ext_enable(args):
+    checkroot()
+    _check_lib_exists()
+    env_lines = _read_file_lines(ENVIRONMENT_FILE)
+    new_env_lines = []
+    found = False
+    for line in env_lines:
+        if LD_PRELOAD_LINE in line and ENVIRONMENT_MARKER in line:
+            found = True
+            new_env_lines.append(line)
+        elif ENVIRONMENT_MARKER in line:
+            continue
+        else:
+            new_env_lines.append(line)
+
+    if not found:
+        new_env_lines.append(f"{LD_PRELOAD_LINE} {ENVIRONMENT_MARKER}\n")
+        _write_file_lines(ENVIRONMENT_FILE, new_env_lines)
+        print(
+            f"Enabled ObsidianOS Overlays. You may need to reboot for changes to take effect."
+        )
+    else:
+        print(f"ObsidianOS Overlay is already enabled.")
+
+
+def handle_ext_disable(args):
+    checkroot()
+    _check_lib_exists()
+    env_lines = _read_file_lines(ENVIRONMENT_FILE)
+    new_env_lines = []
+    removed = False
+    for line in env_lines:
+        if LD_PRELOAD_LINE in line and ENVIRONMENT_MARKER in line:
+            removed = True
+            continue
+        else:
+            new_env_lines.append(line)
+
+    if removed:
+        _write_file_lines(ENVIRONMENT_FILE, new_env_lines)
+        print(
+            f"Disabled ObsidianOS Overlays. You may need to reboot for changes to take effect."
+        )
+    else:
+        print(f"ObsidianOS Overlay is already disabled or not found with marker.")
+
+
 def handle_ext(args):
     if args.ext_command == "add":
         handle_add_extension(args)
@@ -152,6 +202,13 @@ def handle_ext(args):
         handle_remove_extension(args)
     elif args.ext_command == "list":
         handle_list_extensions(args)
+    elif args.ext_command == "enable":
+        handle_ext_enable(args)
+    elif args.ext_command == "disable":
+        handle_ext_disable(args)
     else:
-        print("Invalid 'ext' command. Use 'add', 'rm', or 'list'.", file=sys.stderr)
+        print(
+            "Invalid 'ext' command. Use 'add', 'rm', 'list', 'enable', or 'disable'.",
+            file=sys.stderr,
+        )
         sys.exit(1)
