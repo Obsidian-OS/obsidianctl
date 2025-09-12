@@ -1,4 +1,3 @@
-EXTENSIONS_DIR = "/var/lib/obsidianos/extensions"
 MOUNT_BASE_DIR = "/run/obsidianos-extensions"
 FSTAB_PATH = "/etc/fstab"
 OVERLAYS_CONF_PATH = "/etc/obsidianos-overlays.conf"
@@ -47,13 +46,11 @@ def handle_add_extension(args):
         sys.exit(1)
 
     ext_name = _get_extension_name(ext_path)
-    dest_path = os.path.join(EXTENSIONS_DIR, os.path.basename(ext_path))
+    dest_path = ext_path
     mount_point = os.path.join(MOUNT_BASE_DIR, ext_name)
-    os.makedirs(EXTENSIONS_DIR, exist_ok=True)
     os.makedirs(mount_point, exist_ok=True)
-    print(f"Copying '{ext_path}' to '{dest_path}'...")
-    shutil.copy2(ext_path, dest_path)
-    fstab_entry = f"{dest_path} {mount_point} squashfs defaults 0 0 {FSTAB_MARKER_PREFIX}{ext_name}\n"
+    print(f"Using '{ext_path}' directly as extension source.")
+    fstab_entry = f"{dest_path} {mount_point} squashfs defaults,ro,nofail 0 0 {FSTAB_MARKER_PREFIX}{ext_name}\n"
     overlays_entry = f"{mount_point} {OVERLAYS_MARKER_PREFIX}{ext_name}\n"
     fstab_lines = _read_file_lines(FSTAB_PATH)
     overlays_lines = _read_file_lines(OVERLAYS_CONF_PATH)
@@ -103,16 +100,6 @@ def handle_remove_extension(args):
 
     _write_file_lines(FSTAB_PATH, new_fstab_lines)
     _write_file_lines(OVERLAYS_CONF_PATH, new_overlays_lines)
-    ext_file_pattern = os.path.join(EXTENSIONS_DIR, f"{ext_name}.obsiext")
-    found_files = [
-        f
-        for f in os.listdir(EXTENSIONS_DIR)
-        if f.startswith(ext_name) and f.endswith(".obsiext")
-    ]
-    for f in found_files:
-        file_to_remove = os.path.join(EXTENSIONS_DIR, f)
-        print(f"Removing '{file_to_remove}'...")
-        os.remove(file_to_remove)
 
     if mount_point_to_remove and os.path.exists(mount_point_to_remove):
         try:
@@ -134,7 +121,7 @@ def handle_list_extensions(args):
     fstab_lines = _read_file_lines(FSTAB_PATH)
     fstab_exts = set()
     for line in fstab_lines:
-        match = re.search(rf"{FSTAB_MARKER_PREFIX}([\\w\\d\\-\\_]+)", line)
+        match = re.search(rf"{FSTAB_MARKER_PREFIX}([\w\d\-\_]+)", line)
         if match:
             fstab_exts.add(match.group(1))
 
@@ -212,3 +199,4 @@ def handle_ext(args):
             file=sys.stderr,
         )
         sys.exit(1)
+
