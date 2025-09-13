@@ -4,9 +4,11 @@ OVERLAYS_CONF_PATH = "/etc/obsidianos-overlays.conf"
 LIB_OVERLAYS_SO = "/usr/lib/libobsidianos_overlays.so"
 FSTAB_MARKER_PREFIX = "# OBSIDIANOS_EXT:"
 OVERLAYS_MARKER_PREFIX = "# OBSIDIANOS_EXT:"
-ENVIRONMENT_FILE = "/etc/environment"
+SYSTEMD_ENV_GENERATOR_DIR = "/etc/systemd/system-environment-generators"
+SYSTEMD_ENV_GENERATOR_SCRIPT = (
+    f"{SYSTEMD_ENV_GENERATOR_DIR}/90-obsidianos-overlays-env-generator.sh"
+)
 LD_PRELOAD_LINE = "LD_PRELOAD=/usr/lib/libobsidianos_overlays.so"
-ENVIRONMENT_MARKER = "# OBSIDIANOS_OVERLAYS"
 
 
 def _check_lib_exists():
@@ -138,48 +140,25 @@ def handle_list_extensions(args):
 def handle_ext_enable(args):
     checkroot()
     _check_lib_exists()
-    env_lines = _read_file_lines(ENVIRONMENT_FILE)
-    new_env_lines = []
-    found = False
-    for line in env_lines:
-        if LD_PRELOAD_LINE in line and ENVIRONMENT_MARKER in line:
-            found = True
-            new_env_lines.append(line)
-        elif ENVIRONMENT_MARKER in line:
-            continue
-        else:
-            new_env_lines.append(line)
-
-    if not found:
-        new_env_lines.append(f"{LD_PRELOAD_LINE} {ENVIRONMENT_MARKER}\n")
-        _write_file_lines(ENVIRONMENT_FILE, new_env_lines)
-        print(
-            f"Enabled ObsidianOS Overlays. You may need to reboot for changes to take effect."
-        )
-    else:
-        print(f"ObsidianOS Overlay is already enabled.")
+    os.makedirs(SYSTEMD_ENV_GENERATOR_DIR, exist_ok=True)
+    script_content = f'#!/bin/bash\necho "{LD_PRELOAD_LINE}"'
+    _write_file_lines(SYSTEMD_ENV_GENERATOR_SCRIPT, [script_content])
+    os.chmod(SYSTEMD_ENV_GENERATOR_SCRIPT, 0o755)
+    print(
+        f"Enabled ObsidianOS Overlays. You may need to reboot or log out/in for changes to take effect."
+    )
 
 
 def handle_ext_disable(args):
     checkroot()
     _check_lib_exists()
-    env_lines = _read_file_lines(ENVIRONMENT_FILE)
-    new_env_lines = []
-    removed = False
-    for line in env_lines:
-        if LD_PRELOAD_LINE in line and ENVIRONMENT_MARKER in line:
-            removed = True
-            continue
-        else:
-            new_env_lines.append(line)
-
-    if removed:
-        _write_file_lines(ENVIRONMENT_FILE, new_env_lines)
+    if os.path.exists(SYSTEMD_ENV_GENERATOR_SCRIPT):
+        os.remove(SYSTEMD_ENV_GENERATOR_SCRIPT)
         print(
-            f"Disabled ObsidianOS Overlays. You may need to reboot for changes to take effect."
+            f"Disabled ObsidianOS Overlays. You may need to reboot or log out/in for changes to take effect."
         )
     else:
-        print(f"ObsidianOS Overlay is already disabled or not found with marker.")
+        print(f"ObsidianOS Overlay is already disabled or not found.")
 
 
 def handle_ext(args):
@@ -199,4 +178,3 @@ def handle_ext(args):
             file=sys.stderr,
         )
         sys.exit(1)
-
