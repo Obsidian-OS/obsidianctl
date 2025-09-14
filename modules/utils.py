@@ -5,6 +5,7 @@ import os
 import subprocess
 import re
 import pwd
+import tempfile
 
 
 def lordo(
@@ -113,3 +114,8 @@ def get_user_home_dir():
         except KeyError:
             pass
     return os.path.expanduser("~")
+
+def get_primary_disk_device():
+    root_part = run_command("findmnt -no SOURCE /", capture_output=True).stdout.strip()
+    disk_name = run_command(f"lsblk -no PKNAME {root_part}", capture_output=True).stdout.strip()
+    return f"/dev/{disk_name}"
