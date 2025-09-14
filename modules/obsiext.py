@@ -4,10 +4,8 @@ OVERLAYS_CONF_PATH = "/etc/obsidianos-overlays.conf"
 LIB_OVERLAYS_SO = "/usr/lib/libobsidianos_overlays.so"
 FSTAB_MARKER_PREFIX = "# OBSIDIANOS_EXT:"
 OVERLAYS_MARKER_PREFIX = "# OBSIDIANOS_EXT:"
-SYSTEMD_ENV_GENERATOR_DIR = "/etc/systemd/system-environment-generators"
-SYSTEMD_ENV_GENERATOR_SCRIPT = (
-    f"{SYSTEMD_ENV_GENERATOR_DIR}/90-obsidianos-overlays-env-generator.sh"
-)
+USER_ENV_GENERATOR_DIR = os.path.join(get_user_home_dir(), ".config", "environment.d")
+USER_ENV_GENERATOR_SCRIPT = f"{USER_ENV_GENERATOR_DIR}/99-obsidianos-overlays.conf"
 LD_PRELOAD_LINE = "LD_PRELOAD=/usr/lib/libobsidianos_overlays.so"
 
 
@@ -136,31 +134,6 @@ def handle_list_extensions(args):
     for ext in all_exts:
         print(f"- {ext}")
 
-
-def handle_ext_enable(args):
-    checkroot()
-    _check_lib_exists()
-    os.makedirs(SYSTEMD_ENV_GENERATOR_DIR, exist_ok=True)
-    script_content = f'#!/bin/bash\necho "{LD_PRELOAD_LINE}"'
-    _write_file_lines(SYSTEMD_ENV_GENERATOR_SCRIPT, [script_content])
-    os.chmod(SYSTEMD_ENV_GENERATOR_SCRIPT, 0o755)
-    print(
-        f"Enabled ObsidianOS Overlays. You may need to reboot or log out/in for changes to take effect."
-    )
-
-
-def handle_ext_disable(args):
-    checkroot()
-    _check_lib_exists()
-    if os.path.exists(SYSTEMD_ENV_GENERATOR_SCRIPT):
-        os.remove(SYSTEMD_ENV_GENERATOR_SCRIPT)
-        print(
-            f"Disabled ObsidianOS Overlays. You may need to reboot or log out/in for changes to take effect."
-        )
-    else:
-        print(f"ObsidianOS Overlay is already disabled or not found.")
-
-
 def handle_ext(args):
     if args.ext_command == "add":
         handle_add_extension(args)
@@ -169,9 +142,9 @@ def handle_ext(args):
     elif args.ext_command == "list":
         handle_list_extensions(args)
     elif args.ext_command == "enable":
-        handle_ext_enable(args)
+        print("Not implemented yet. sorry but it was breaking systems. Use LD_PRELOAD yourself for now.")
     elif args.ext_command == "disable":
-        handle_ext_disable(args)
+        print("Not implemented yet. sorry but it was breaking systems. Use LD_PRELOAD yourself for now.")
     else:
         print(
             "Invalid 'ext' command. Use 'add', 'rm', 'list', 'enable', or 'disable'.",
