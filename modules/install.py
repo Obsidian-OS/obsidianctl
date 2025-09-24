@@ -16,7 +16,7 @@ def handle_mkobsidiansfs(args):
     os.remove("tmp_system.sfs")
 
 
-def handle_install(args):
+def handle_install(args):     
     checkroot()
     fstype="ext4"
     if args.use_f2fs:
@@ -264,7 +264,7 @@ WantedBy=getty.target
         run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
         mount_commands = [
-            f"mount {lordo('root_b', device) {mount_dir}/boot",
+            f"mount {lordo('root_b', device)} {mount_dir}/boot",
             f"mount {lordo('ESP_B', device)} {mount_dir}/boot",
             f"mount {lordo('etc_ab', device)} {mount_dir}/etc",
             f"mount {lordo('var_ab', device)} {mount_dir}/var",
