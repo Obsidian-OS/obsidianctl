@@ -317,19 +317,18 @@ WantedBy=getty.target
 timeout 0
 default obsidian-a.conf
 """
-    entry_a_conf = f"""
+        entry_a_conf = f"""
 title ObsidianOS (Slot A)
 linux /vmlinuz-linux
 initrd /initramfs-linux.img
 options root=PARTUUID={root_a_partuuid} rw
 """
-    entry_b_conf = f"""
+        entry_b_conf = f"""
 title ObsidianOS (Slot B)
 linux /vmlinuz-linux
 initrd /initramfs-linux.img
 options root=PARTUUID={root_b_partuuid} rw
 """
-
         esp_a_config_mount_dir = "/mnt/obsidian_esp_a_config"
         run_command(f"mkdir -p {esp_a_config_mount_dir}")
         try:
