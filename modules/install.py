@@ -251,7 +251,7 @@ WantedBy=getty.target
         print("Installing GRUB to ESP_A...")
         run_command(f"mkdir -p {mount_dir}")
         mount_commands = [
-            f"mount {lordo('root_a', device) {mount_dir}/boot",
+            f"mount {lordo('root_a', device)} {mount_dir}/boot",
             f"mount {lordo('ESP_A', device)} {mount_dir}/boot",
             f"mount {lordo('etc_ab', device)} {mount_dir}/etc",
             f"mount {lordo('var_ab', device)} {mount_dir}/var",
