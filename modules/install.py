@@ -84,7 +84,7 @@ label: gpt
 
     mount_dir = "/mnt/obsidian_install"
     run_command(f"mkdir -p {mount_dir}")
-    rint("Mounting root partition for slot 'a'...")
+    print("Mounting root partition for slot 'a'...")
     run_command(f"mount {lordo('root_a', device)} {mount_dir}")
     print(f"Extracting system from {system_sfs} to slot 'a'...")
     run_command(f"unsquashfs -f -d {mount_dir} -no-xattrs {system_sfs}")
