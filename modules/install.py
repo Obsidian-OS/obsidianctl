@@ -339,9 +339,9 @@ options root=PARTUUID={root_b_partuuid} rw
             f.write(entry_a_conf)
         with open(f"{esp_a_config_mount_dir}/loader/entries/obsidian-b.conf", "w") as f:
             f.write(entry_b_conf)
-        finally:
-            run_command(f"umount {esp_a_config_mount_dir}", check=False)
-            run_command(f"rm -r {esp_a_config_mount_dir}", check=False)
+    finally:
+        run_command(f"umount {esp_a_config_mount_dir}", check=False)
+        run_command(f"rm -r {esp_a_config_mount_dir}", check=False)
 
     print("Writing boot configuration to ESP_B...")
     esp_b_config_mount_dir = "/mnt/obsidian_esp_b_config"
