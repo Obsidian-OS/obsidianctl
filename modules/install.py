@@ -328,17 +328,17 @@ initrd /initramfs-linux.img
 options root=PARTUUID={root_b_partuuid} rw
 """
 
-        esp_a_config_mount_dir = "/mnt/obsidian_esp_a_config"
-        run_command(f"mkdir -p {esp_a_config_mount_dir}")
-        try:
-            run_command(f"mount {part1} {esp_a_config_mount_dir}")
-            run_command(f"mkdir -p {esp_a_config_mount_dir}/loader/entries")
-            with open(f"{esp_a_config_mount_dir}/loader/loader.conf", "w") as f:
-                f.write(loader_conf)
-            with open(f"{esp_a_config_mount_dir}/loader/entries/obsidian-a.conf", "w") as f:
-                f.write(entry_a_conf)
-            with open(f"{esp_a_config_mount_dir}/loader/entries/obsidian-b.conf", "w") as f:
-                f.write(entry_b_conf)
+    esp_a_config_mount_dir = "/mnt/obsidian_esp_a_config"
+    run_command(f"mkdir -p {esp_a_config_mount_dir}")
+    try:
+        run_command(f"mount {part1} {esp_a_config_mount_dir}")
+        run_command(f"mkdir -p {esp_a_config_mount_dir}/loader/entries")
+        with open(f"{esp_a_config_mount_dir}/loader/loader.conf", "w") as f:
+            f.write(loader_conf)
+        with open(f"{esp_a_config_mount_dir}/loader/entries/obsidian-a.conf", "w") as f:
+            f.write(entry_a_conf)
+        with open(f"{esp_a_config_mount_dir}/loader/entries/obsidian-b.conf", "w") as f:
+            f.write(entry_b_conf)
         finally:
             run_command(f"umount {esp_a_config_mount_dir}", check=False)
             run_command(f"rm -r {esp_a_config_mount_dir}", check=False)
