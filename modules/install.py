@@ -259,7 +259,7 @@ WantedBy=getty.target
         ]
         for cmd in mount_commands:
             run_command(cmd)
-        run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=\"ObsidianOS (Slot A GRUB)\"")
+        run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
         # we do NOT care about fedora... for now. Quick rant: WHY DOES FEDORA AND REHL AND CENTOS AND ROCKY AND OPENSUSE AND SUSE MAINTAIN LEGACY GRUB, REQUIRING US TO USE grub2-install I HATE IT STOP
         run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
@@ -272,7 +272,7 @@ WantedBy=getty.target
         ]
         for cmd in mount_commands:
             run_command(cmd)
-        run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=\"ObsidianOS (Slot B GRUB)\"")
+        run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotB")
         run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
     else:
