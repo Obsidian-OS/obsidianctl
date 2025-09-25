@@ -16,7 +16,15 @@
 
 ## Install (AUR)
 
-`obsidianctl` is in the AUR as [obsidianctl-git](https://aur.archlinux.org/packages/obsidianctl-git). You can install it as follows:
+`obsidianctl` is in the AUR as [obsidianctl](https://aur.archlinux.org/packages/obsidianctl) and [obsidianctl-git](https://aur.archlinux.org/packages/obsidianctl-git). You can install it as follows:
+
+### Stable version (latest release, does not include unreleased change)
+
+```bash
+yay -S obsidianctl
+```
+
+### Git version (not very stable, contains unreleased changes)
 
 ```bash
 yay -S obsidianctl-git
