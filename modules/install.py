@@ -16,7 +16,7 @@ def handle_mkobsidiansfs(args):
     os.remove("tmp_system.sfs")
 
 
-def handle_install(args):     
+def handle_install(args):
     checkroot()
     fstype="ext4"
     if args.use_f2fs:
@@ -246,12 +246,12 @@ WantedBy=getty.target
         run_command(f"umount {mount_b_dir}", check=False)
         run_command(f"rm -r {mount_b_dir}", check=False)
 
-    if args.grub_install:
+    if args.use_grub:
         mount_dir="/mnt/obsidianos-install-grub"
         print("Installing GRUB to ESP_A...")
         run_command(f"mkdir -p {mount_dir}")
         mount_commands = [
-            f"mount {lordo('root_a', device)} {mount_dir}/boot",
+            f"mount {lordo('root_a', device) {mount_dir}/boot",
             f"mount {lordo('ESP_A', device)} {mount_dir}/boot",
             f"mount {lordo('etc_ab', device)} {mount_dir}/etc",
             f"mount {lordo('var_ab', device)} {mount_dir}/var",
@@ -264,7 +264,7 @@ WantedBy=getty.target
         run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
         mount_commands = [
-            f"mount {lordo('root_b', device)} {mount_dir}/boot",
+            f"mount {lordo('root_b', device) {mount_dir}/boot",
             f"mount {lordo('ESP_B', device)} {mount_dir}/boot",
             f"mount {lordo('etc_ab', device)} {mount_dir}/etc",
             f"mount {lordo('var_ab', device)} {mount_dir}/var",
@@ -292,10 +292,10 @@ WantedBy=getty.target
         esp_b_mount_dir = "/mnt/obsidian_esp_b"
         run_command(f"mkdir -p {esp_b_mount_dir}")
         try:
-            run_command(f"mount {part2} {esp_b_mount_dir}")
+                run_command(f"mount {part2} {esp_b_mount_dir}")
             run_command(
                 f'bootctl --esp-path={esp_b_mount_dir} --efi-boot-option-description="ObsidianOS (Slot B)" install'
-            )
+           )
         finally:
             run_command(f"umount {esp_b_mount_dir}", check=False)
             run_command(f"rm -r {esp_b_mount_dir}", check=False)
@@ -317,18 +317,19 @@ WantedBy=getty.target
 timeout 0
 default obsidian-a.conf
 """
-        entry_a_conf = f"""
+    entry_a_conf = f"""
 title ObsidianOS (Slot A)
 linux /vmlinuz-linux
 initrd /initramfs-linux.img
 options root=PARTUUID={root_a_partuuid} rw
 """
-        entry_b_conf = f"""
+    entry_b_conf = f"""
 title ObsidianOS (Slot B)
 linux /vmlinuz-linux
 initrd /initramfs-linux.img
 options root=PARTUUID={root_b_partuuid} rw
 """
+
         esp_a_config_mount_dir = "/mnt/obsidian_esp_a_config"
         run_command(f"mkdir -p {esp_a_config_mount_dir}")
         try:
