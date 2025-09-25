@@ -18,8 +18,8 @@
 
 `obsidianctl` is in the AUR as [obsidianctl-git](https://aur.archlinux.org/packages/obsidianctl-git). You can install it as follows:
 
-```console
-$ paru -S obsidianctl-git
+```bash
+yay -S obsidianctl-git
 ```
 
 Or with your favorite [AUR helper](https://wiki.archlinux.org/title/AUR_helpers).
