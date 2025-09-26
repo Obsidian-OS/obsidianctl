@@ -97,12 +97,22 @@ sudo ./obsidianctl install /dev/sda /path/to/your_system.sfs
 
 #### `switch <slot>`
 
-Switches the active boot slot to either 'a' or 'b'. This change is persistent across reboots.
+Switches the active boot slot to either 'a' or 'b' for the next boot, persistently.
 
 *   `<slot>`: The slot to make active (`a` or `b`).
 
 ```bash
 sudo ./obsidianctl switch a
+```
+
+#### `switch-once <slot>`
+
+Switches the active boot slot to either 'a' or 'b' once only.
+
+*   `<slot>`: The slot to make active for once (`a` or `b`).
+
+```bash
+sudo ./obsidianctl switch-once a
 ```
 
 #### `update <slot> <system_sfs>`
@@ -146,6 +156,8 @@ Creates a compressed backup of a specific slot with metadata.
 
 *   `<slot>`: The slot to backup (`a` or `b`).
 *   `--backup-dir`: Directory to store backups (default: `/var/backups/obsidianctl/slot_X`).
+*   `--device`: Drive (not partition) to backup (default: current drive).
+*   `--full-backup`: Backup your ENTIRE SYSTEM. (EXPERIMENTAL. USE AT YOUR OWN RISK.)
 
 ```bash
 sudo ./obsidianctl backup-slot a --backup-dir /mnt/external/backups
@@ -157,6 +169,7 @@ Restores a slot from a previous backup.
 
 *   `<slot>`: The slot to restore (`a` or `b`).
 *   `<backup_path>`: Path to the backup file (`.sfs`).
+*   `--device`: Drive (not partition) to rollback (default: current drive).
 
 ```bash
 sudo ./obsidianctl rollback-slot a /var/backups/obsidianctl/slot_a/slot_a_backup_20250823_143022.sfs
@@ -178,6 +191,67 @@ Verifies filesystem integrity and checks for corrupted files in a specific slot.
 
 ```bash
 sudo ./obsidianctl verify-integrity a
+```
+
+#### `switch-kernel <kernel_name>`
+
+Switches the default kernel that systemd-boot will use. This affects both slots unless a specific slot is provided.
+
+*   `<kernel_name>`: The name of the kernel to switch to (e.g., `a` or `b`).
+*   `--device <device>`: The target block device (e.g., `/dev/sda`). If not specified, the primary disk will be used.
+*   `--slot <slot>`: The slot to modify (`a` or `b`). If not specified, both slots will be modified.
+
+```bash
+sudo ./obsidianctl switch-kernel a
+sudo ./obsidianctl switch-kernel b --slot b
+```
+
+#### `ext`
+
+Manages ObsidianOS extensions. Extensions are SquashFS images that can be mounted as overlays.
+
+##### `ext add <path>`
+
+Adds an ObsidianOS extension.
+
+*   `<path>`: Path to the `.obsiext` file.
+
+```bash
+sudo ./obsidianctl ext add /path/to/my_extension.obsiext
+```
+
+##### `ext rm <name>`
+
+Removes an ObsidianOS extension.
+
+*   `<name>`: Name of the extension to remove.
+
+```bash
+sudo ./obsidianctl ext rm my_extension
+```
+
+##### `ext list`
+
+Lists installed ObsidianOS extensions.
+
+```bash
+sudo ./obsidianctl ext list
+```
+
+##### `ext enable`
+
+Enables ObsidianOS Overlays on boot. (Not implemented yet)
+
+```bash
+sudo ./obsidianctl ext enable
+```
+
+##### `ext disable`
+
+Disables ObsidianOS Overlays on boot. (Not implemented yet)
+
+```bash
+sudo ./obsidianctl ext disable
 ```
 
 ## Modular Structure
