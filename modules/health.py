@@ -104,28 +104,31 @@ def check_slot_health(slot):
     
     # Check kernel and packages
     mount_dir = f"/mnt/health_check_{slot}"
+    mount_root_dir = f"/mnt/health_check_{slot}_root"
     try:
-        run_command(f"mkdir -p {mount_dir}")
-        run_command(f"mount {part_path} {mount_dir}")
+        run_command(f"mount {esp_path} {mount_dir} --mkdir")
+        run_command(f"mount {part_path} {mount_root_dir} --mkdir")
         
         # Check kernel
-        boot_dir = os.path.join(mount_dir, "boot")
-        if os.path.exists(boot_dir):
-            kernels = [f for f in os.listdir(boot_dir) if f.startswith("vmlinuz")]
+        if os.path.exists(mount_dir):
+            kernels = [f for f in os.listdir(mount_dir) if f.startswith("vmlinuz")]
             if kernels:
                 status["kernel"] = kernels[0].replace("vmlinuz-", "")
             else:
                 status["errors"].append("No kernel found")
         else:
-            status["errors"].append("Boot directory not found")
+            status["errors"].append("ESP not found")
         
-        # Check packages
-        pacman_dir = os.path.join(mount_dir, "var/lib/pacman/local")
-        if os.path.exists(pacman_dir):
-            package_count = len([d for d in os.listdir(pacman_dir) if os.path.isdir(os.path.join(pacman_dir, d))])
-            status["packages"] = f"{package_count} packages"
+        if os.path.exists(mount_root_dir):
+            # Check packages
+            pacman_dir = os.path.join(mount_root_dir, "var/lib/pacman/local")
+            if os.path.exists(pacman_dir):
+                package_count = len([d for d in os.listdir(pacman_dir) if os.path.isdir(os.path.join(pacman_dir, d))])
+                status["packages"] = f"{package_count} packages"
+            else:
+                status["packages"] = "unknown"
         else:
-            status["packages"] = "unknown"
+            status["errors"].append("Root not found")
             
     except Exception as e:
         status["errors"].append(f"Mount check failed: {e}")
