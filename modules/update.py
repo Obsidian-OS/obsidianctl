@@ -90,6 +90,52 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
             run_command(f"umount {esp_tmp_mount}", check=False)
             run_command(f"rmdir {esp_tmp_mount}", check=False)
 
+        bootloader = detect_bootloader()
+        if bootloader == 'grub':
+            print("Regenerating GRUB configuration...")
+            mount_dir_grub = f"/mnt/obsidian_grub_{slot}"
+            run_command(f"mkdir -p {mount_dir_grub}")
+            try:
+                run_command(f"mount /dev/disk/by-label/root_{slot} {mount_dir_grub}")
+                run_command(f"mount /dev/disk/by-label/ESP_{slot.upper()} {mount_dir_grub}/boot")
+                run_command(f"mount /dev/disk/by-label/etc_ab {mount_dir_grub}/etc")
+                run_command(f"mount /dev/disk/by-label/var_ab {mount_dir_grub}/var")
+                run_command(f"mount /dev/disk/by-label/home_ab {mount_dir_grub}/home")
+                grub_cmd = get_grub_command()
+                if grub_cmd:
+                    run_command(f"arch-chroot {mount_dir_grub} {grub_cmd} -o /boot/grub/grub.cfg")
+                else:
+                    print("Warning: No GRUB command found. Skipping regeneration.", file=sys.stderr)
+            finally:
+                run_command(f"umount -R {mount_dir_grub}", check=False)
+                run_command(f"rm -r {mount_dir_grub}", check=False)
+        elif bootloader == 'systemd-boot':
+            print("Updating systemd-boot configuration...")
+            esp_config_mount = f"/mnt/obsidian_esp_config_{slot}"
+            run_command(f"mkdir -p {esp_config_mount}")
+            try:
+                run_command(f"mount /dev/disk/by-label/ESP_{slot.upper()} {esp_config_mount}")
+                root_partuuid = run_command(
+                    f"blkid -s PARTUUID -o value /dev/disk/by-label/root_{slot}", capture_output=True, text=True
+                ).stdout.strip()
+                if not root_partuuid:
+                    print(f"Could not determine PARTUUID for root_{slot}. Skipping boot config.", file=sys.stderr)
+                else:
+                    run_command(f"mkdir -p {esp_config_mount}/loader/entries")
+                    loader_conf = "timeout 0\ndefault obsidian-a.conf\n"
+                    entry_conf = f"""title ObsidianOS (Slot {slot.upper()})
+linux /vmlinuz-linux
+initrd /initramfs-linux.img
+options root=PARTUUID={root_partuuid} rw
+"""
+                    with open(f"{esp_config_mount}/loader/loader.conf", "w") as f:
+                        f.write(loader_conf)
+                    with open(f"{esp_config_mount}/loader/entries/obsidian-{slot}.conf", "w") as f:
+                        f.write(entry_conf)
+            finally:
+                run_command(f"umount {esp_config_mount}", check=False)
+                run_command(f"rm -r {esp_config_mount}", check=False)
+
     finally:
         print("Unmounting partition...")
         run_command(f"umount -R {mount_dir}", check=False)

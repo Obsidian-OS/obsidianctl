@@ -77,17 +77,46 @@ def _get_part_path(device, part_num):
         return f"{device}{part_num}"
 
 
-def get_current_slot_systemd():
-    try:
-        bootctl_output = subprocess.check_output(["bootctl", "status"], text=True)
-        match = re.search(
-            r"^\s*id:\s+.*obsidian-([ab])\.conf", bootctl_output, re.MULTILINE
-        )
-        if match:
-            return match.group(1)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        pass
+def detect_bootloader():
+    if os.path.exists('/boot/loader/loader.conf'):
+        return 'systemd-boot'
+    elif os.path.exists('/boot/grub/grub.cfg'):
+        return 'grub'
+    else:
+        return 'unknown'
+
+def get_grub_command():
+    if shutil.which('grub-mkconfig'):
+        return 'grub-mkconfig'
+    elif shutil.which('update-grub'):
+        return 'update-grub'
+    else:
+        return None
+
+def get_current_slot_bootloader():
+    bootloader = detect_bootloader()
+    if bootloader == 'systemd-boot':
+        try:
+            bootctl_output = subprocess.check_output(["bootctl", "status"], text=True)
+            match = re.search(
+                r"^\s*id:\s+.*obsidian-([ab])\.conf", bootctl_output, re.MULTILINE
+            )
+            if match:
+                return match.group(1)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            pass
+    elif bootloader == 'grub':
+        try:
+            grubenv_output = subprocess.check_output(["grub-editenv", "list"], text=True)
+            match = re.search(r"saved_entry=ObsidianOSslot([ab])", grubenv_output)
+            if match:
+                return match.group(1)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            pass
     return "unknown"
+
+def get_current_slot_systemd():
+    return get_current_slot_bootloader()
 
 
 def get_current_slot():

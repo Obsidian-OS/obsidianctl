@@ -238,29 +238,61 @@ WantedBy=getty.target
         run_command(f"umount {mount_b_dir}", check=False)
         run_command(f"rm -r {mount_b_dir}", check=False)
 
-    print("Installing systemd-boot to ESP_A...")
-    esp_a_mount_dir = "/mnt/obsidian_esp_a"
-    run_command(f"mkdir -p {esp_a_mount_dir}")
-    try:
-        run_command(f"mount {part1} {esp_a_mount_dir}")
-        run_command(
-            f'bootctl --esp-path={esp_a_mount_dir} --efi-boot-option-description="ObsidianOS (Slot A)" install'
-        )
-    finally:
-        run_command(f"umount {esp_a_mount_dir}", check=False)
-        run_command(f"rm -r {esp_a_mount_dir}", check=False)
+    if args.use_grub:
+        print("Installing GRUB to ESP_A...")
+        mount_dir = "/mnt/obsidianos-dualboot-grub"
+        run_command(f"mkdir -p {mount_dir}")
+        mount_commands = [
+            f"mount {part3} {mount_dir}/",
+            f"mount {part1} {mount_dir}/boot",
+            f"mount {part5} {mount_dir}/etc",
+            f"mount {part6} {mount_dir}/var",
+            f"mount {part7} {mount_dir}/home",
+        ]
+        for cmd in mount_commands:
+            run_command(cmd)
+        run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
+        grub_cmd = get_grub_command()
+        if grub_cmd:
+            run_command(f"arch-chroot {mount_dir} {grub_cmd} -o /boot/grub/grub.cfg")
+        run_command(f"umount -R {mount_dir}")
+        mount_commands = [
+            f"mount {part4} {mount_dir}/",
+            f"mount {part2} {mount_dir}/boot",
+            f"mount {part5} {mount_dir}/etc",
+            f"mount {part6} {mount_dir}/var",
+            f"mount {part7} {mount_dir}/home",
+        ]
+        for cmd in mount_commands:
+            run_command(cmd)
+        run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotB")
+        if grub_cmd:
+            run_command(f"arch-chroot {mount_dir} {grub_cmd} -o /boot/grub/grub.cfg")
+        run_command(f"umount -R {mount_dir}")
+    else:
+        print("Installing systemd-boot to ESP_A...")
+        esp_a_mount_dir = "/mnt/obsidian_esp_a"
+        run_command(f"mkdir -p {esp_a_mount_dir}")
+        try:
+            run_command(f"mount {part1} {esp_a_mount_dir}")
+            run_command(
+                f'bootctl --esp-path={esp_a_mount_dir} --efi-boot-option-description="ObsidianOS (Slot A)" install'
+            )
+        finally:
+            run_command(f"umount {esp_a_mount_dir}", check=False)
+            run_command(f"rm -r {esp_a_mount_dir}", check=False)
 
-    print("Installing systemd-boot to ESP_B...")
-    esp_b_mount_dir = "/mnt/obsidian_esp_b"
-    run_command(f"mkdir -p {esp_b_mount_dir}")
-    try:
-        run_command(f"mount {part2} {esp_b_mount_dir}")
-        run_command(
-            f'bootctl --esp-path={esp_b_mount_dir} --efi-boot-option-description="ObsidianOS (Slot B)" install'
-        )
-    finally:
-        run_command(f"umount {esp_b_mount_dir}", check=False)
-        run_command(f"rm -r {esp_b_mount_dir}", check=False)
+        print("Installing systemd-boot to ESP_B...")
+        esp_b_mount_dir = "/mnt/obsidian_esp_b"
+        run_command(f"mkdir -p {esp_b_mount_dir}")
+        try:
+            run_command(f"mount {part2} {esp_b_mount_dir}")
+            run_command(
+                f'bootctl --esp-path={esp_b_mount_dir} --efi-boot-option-description="ObsidianOS (Slot B)" install'
+            )
+        finally:
+            run_command(f"umount {esp_b_mount_dir}", check=False)
+            run_command(f"rm -r {esp_b_mount_dir}", check=False)
 
     root_a_partuuid = run_command(
         f"blkid -s PARTUUID -o value {part3}", capture_output=True, text=True

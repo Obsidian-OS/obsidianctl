@@ -11,26 +11,34 @@ def handle_switch(args):
         )
         sys.exit(1)
 
-    esp_mount_dir = "/mnt/obsidian_esp_tmp"
-    run_command(f"mkdir -p {esp_mount_dir}")
-    try:
-        run_command(f"mount {esp_a_path} {esp_mount_dir}")
-        run_command(
-            f"bootctl --esp-path={esp_mount_dir} set-default obsidian-{slot}.conf"
-        )
-        print(f"Default boot entry set to obsidian-{slot}.conf on ESP_A.")
-    finally:
-        run_command(f"umount {esp_mount_dir}", check=False)
+    bootloader = detect_bootloader()
+    if bootloader == 'systemd-boot':
+        esp_mount_dir = "/mnt/obsidian_esp_tmp"
+        run_command(f"mkdir -p {esp_mount_dir}")
+        try:
+            run_command(f"mount {esp_a_path} {esp_mount_dir}")
+            run_command(
+                f"bootctl --esp-path={esp_mount_dir} set-default obsidian-{slot}.conf"
+            )
+            print(f"Default boot entry set to obsidian-{slot}.conf on ESP_A.")
+        finally:
+            run_command(f"umount {esp_mount_dir}", check=False)
 
-    try:
-        run_command(f"mount {esp_b_path} {esp_mount_dir}")
-        run_command(
-            f"bootctl --esp-path={esp_mount_dir} set-default obsidian-{slot}.conf"
-        )
-        print(f"Default boot entry set to obsidian-{slot}.conf on ESP_B.")
-    finally:
-        run_command(f"umount {esp_mount_dir}", check=False)
-        run_command(f"rm -r {esp_mount_dir}", check=False)
+        try:
+            run_command(f"mount {esp_b_path} {esp_mount_dir}")
+            run_command(
+                f"bootctl --esp-path={esp_mount_dir} set-default obsidian-{slot}.conf"
+            )
+            print(f"Default boot entry set to obsidian-{slot}.conf on ESP_B.")
+        finally:
+            run_command(f"umount {esp_mount_dir}", check=False)
+            run_command(f"rm -r {esp_mount_dir}", check=False)
+    elif bootloader == 'grub':
+        run_command(f'grub-set-default "ObsidianOSslot{slot.upper()}"')
+        print(f"Default GRUB entry set to ObsidianOSslot{slot.upper()}.")
+    else:
+        print("Unknown bootloader. Cannot switch.", file=sys.stderr)
+        sys.exit(1)
 
     print(f"Active boot slot switched to '{slot}'. The change is persistent.")
     
@@ -47,25 +55,33 @@ def handle_switchonce(args):
         )
         sys.exit(1)
 
-    esp_mount_dir = "/mnt/obsidian_esp_tmp"
-    run_command(f"mkdir -p {esp_mount_dir}")
-    try:
-        run_command(f"mount {esp_a_path} {esp_mount_dir}")
-        run_command(
-            f"bootctl --esp-path={esp_mount_dir} set-oneshot obsidian-{slot}.conf"
-        )
-        print(f"Default boot entry set to obsidian-{slot}.conf on ESP_A.")
-    finally:
-        run_command(f"umount {esp_mount_dir}", check=False)
+    bootloader = detect_bootloader()
+    if bootloader == 'systemd-boot':
+        esp_mount_dir = "/mnt/obsidian_esp_tmp"
+        run_command(f"mkdir -p {esp_mount_dir}")
+        try:
+            run_command(f"mount {esp_a_path} {esp_mount_dir}")
+            run_command(
+                f"bootctl --esp-path={esp_mount_dir} set-oneshot obsidian-{slot}.conf"
+            )
+            print(f"Default boot entry set to obsidian-{slot}.conf on ESP_A.")
+        finally:
+            run_command(f"umount {esp_mount_dir}", check=False)
 
-    try:
-        run_command(f"mount {esp_b_path} {esp_mount_dir}")
-        run_command(
-            f"bootctl --esp-path={esp_mount_dir} set-oneshot obsidian-{slot}.conf"
-        )
-        print(f"Default boot entry set to obsidian-{slot}.conf on ESP_B.")
-    finally:
-        run_command(f"umount {esp_mount_dir}", check=False)
-        run_command(f"rm -r {esp_mount_dir}", check=False)
+        try:
+            run_command(f"mount {esp_b_path} {esp_mount_dir}")
+            run_command(
+                f"bootctl --esp-path={esp_mount_dir} set-oneshot obsidian-{slot}.conf"
+            )
+            print(f"Default boot entry set to obsidian-{slot}.conf on ESP_B.")
+        finally:
+            run_command(f"umount {esp_mount_dir}", check=False)
+            run_command(f"rm -r {esp_mount_dir}", check=False)
+    elif bootloader == 'grub':
+        run_command(f'grub-reboot "ObsidianOSslot{slot.upper()}"')
+        print(f"Next boot GRUB entry set to ObsidianOSslot{slot.upper()}.")
+    else:
+        print("Unknown bootloader. Cannot switch.", file=sys.stderr)
+        sys.exit(1)
 
     print(f"Active boot slot switched to '{slot}'. The change is temporarily.")
