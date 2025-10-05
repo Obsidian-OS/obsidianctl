@@ -246,7 +246,7 @@ WantedBy=getty.target
         run_command(f"umount {mount_b_dir}", check=False)
         run_command(f"rm -r {mount_b_dir}", check=False)
 
-    if args.use_grub:
+    if args.use_grub or args.use_grub2 or args.use_host_grub:
         mount_dir="/mnt/obsidianos-install-grub"
         print("Installing GRUB to ESP_A...")
         run_command(f"mkdir -p {mount_dir}")
@@ -259,8 +259,12 @@ WantedBy=getty.target
         ]
         for cmd in mount_commands:
             run_command(cmd)
-        run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
-        # we do NOT care about fedora... for now. Quick rant: WHY DOES FEDORA AND REHL AND CENTOS AND ROCKY AND OPENSUSE AND SUSE MAINTAIN LEGACY GRUB, REQUIRING US TO USE grub2-install I HATE IT STOP
+        if args.use_grub:
+            run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
+        elif args.use_grub2:
+            run_command(f"arch-chroot {mount_dir} grub-install2 --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
+        elif args.use_host_grub:
+            run_command(f"sudo grub-install --target=x86_64-efi --efi-directory={mount_dir}/boot --boot-directory={mount_dir}/boot/ --bootloader-id=ObsidianOSslotA")
         run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
         mount_commands = [
@@ -272,7 +276,12 @@ WantedBy=getty.target
         ]
         for cmd in mount_commands:
             run_command(cmd)
-        run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotB")
+        if args.use_grub:
+            run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotB")
+        elif args.use_grub2:
+            run_command(f"arch-chroot {mount_dir} grub-install2 --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotB")
+        elif args.use_host_grub:
+            run_command(f"sudo grub-install --target=x86_64-efi --efi-directory={mount_dir}/boot --boot-directory={mount_dir}/boot/ --bootloader-id=ObsidianOSslotB")
         run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
     else:

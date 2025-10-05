@@ -25,6 +25,8 @@ def main():
     parser_install.add_argument("--dual-boot", action="store_true", help="Setup a dual-boot configuration. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
     parser_install.add_argument("--use-f2fs", action="store_true", help="Setup an f2fs configuration. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
     parser_install.add_argument("--use-grub", action="store_true", help="Setup an grub configuration. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
+    parser_install.add_argument("--use-grub2", action="store_true", help="Setup an grub2 configuration. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
+    parser_install.add_argument("--use-host-grub", action="store_true", help="Setup an grub configuration using the host's grub-install. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
     parser_install.set_defaults(func=handle_install)
     parser_switchonce = subparsers.add_parser(
       "switch-once", help="Switch active boot slot to 'a' or 'b' once only."
