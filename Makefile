@@ -1,7 +1,7 @@
 all: build
 
 build:
-	echo -e "#!/usr/bin/env python3\nimport argparse" > obsidianctl
+	echo > obsidianctl
 	cat ./modules/utils.py >> obsidianctl
 	echo -e "\n" >> obsidianctl
 	cat ./modules/status.py >> obsidianctl

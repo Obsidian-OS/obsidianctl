@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import sys
 def main():
@@ -23,18 +24,42 @@ def main():
     parser_install.add_argument("--var-size", default="5G", help="Size of the shared var partition.")
     parser_install.add_argument("--esp-size", default="512M", help="Size of the ESP partitions for slots a and b.")
     parser_install.add_argument("--dual-boot", action="store_true", help="Setup a dual-boot configuration. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
-    parser_install.add_argument("--use-f2fs", action="store_true", help="Setup an f2fs configuration. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
-    parser_install.add_argument("--use-grub", action="store_true", help="Setup an grub configuration. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
-    parser_install.add_argument("--use-grub2", action="store_true", help="Setup an grub2 configuration. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
-    parser_install.add_argument("--use-host-grub", action="store_true", help="Setup an grub configuration using the host's grub-install. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
+    parser_install.add_argument("--use-f2fs", action="store_true", help="Setup an f2fs configuration.")
+    parser_install.add_argument("--use-grub", action="store_true", help="Setup an grub configuration. (Does not do anything, as grub is the default.)")
+    parser_install.add_argument("--use-systemdboot", action="store_true", help="Setup an (DEPRICATED) systemd-boot configuration.")
+    parser_install.add_argument("--use-grub2", action="store_true", help="Setup an grub configuration, using grub2-install as some distros maintain both.")
     parser_install.set_defaults(func=handle_install)
-    parser_switchonce = subparsers.add_parser(
-      "switch-once", help="Switch active boot slot to 'a' or 'b' once only."
-    )
-    parser_switchonce.add_argument(
-      "slot", choices=["a", "b"], help="The slot to make active for once."
-    )
-    parser_switchonce.set_defaults(func=handle_switchonce)
+    if is_systemd_boot(): 
+        parser_switchonce = subparsers.add_parser(
+          "switch-once", help="Switch active boot slot to 'a' or 'b' once only."
+        )
+        parser_switchonce.add_argument(
+            "slot", choices=["a", "b"], help="The slot to make active for once."
+        )
+        parser_switchonce.set_defaults(func=handle_switchonce)
+        
+        parser_switch = subparsers.add_parser(
+            "switch", help="Switch active boot slot to 'a' or 'b'."
+        )
+        parser_switch.add_argument(
+            "slot", choices=["a", "b"], help="The slot to make active."
+        )
+        parser_switch.set_defaults(func=handle_switch)
+
+        parser_switch_kernel = subparsers.add_parser(
+            "switch-kernel", help="Switch the default kernel."
+        )
+        parser_switch_kernel.add_argument(
+            "kernel_name", help="The name of the kernel to switch to (e.g., 'a' or 'b')."
+        )
+        parser_switch_kernel.add_argument(
+            "--device", help="The target block device (e.g., /dev/sda). If not specified, the primary disk will be used."
+        )
+        parser_switch_kernel.add_argument(
+            "--slot", choices=["a", "b"], help="The slot to modify (a or b). If not specified, both slots will be modified."
+        )
+        parser_switch_kernel.set_defaults(func=handle_switch_kernel)
+        
     parser_diff = subparsers.add_parser(
         "slot-diff", help="Show diff between the two slots."
     )
@@ -81,14 +106,6 @@ def main():
         "slot", choices=["a", "b"], help="The slot to verify."
     )
     parser_verify.set_defaults(func=handle_verify_integrity)
-    
-    parser_switch = subparsers.add_parser(
-        "switch", help="Switch active boot slot to 'a' or 'b'."
-    )
-    parser_switch.add_argument(
-        "slot", choices=["a", "b"], help="The slot to make active."
-    )
-    parser_switch.set_defaults(func=handle_switch)
 
     parser_update = subparsers.add_parser(
         "update", help="Update a slot with a new system image."
@@ -141,20 +158,6 @@ def main():
         "--break-system", action="store_true", help="Forcibly update even if not using an default system.sfs."
     )
     parser_netupdate.set_defaults(func=handle_netupdate)
-
-    parser_switch_kernel = subparsers.add_parser(
-        "switch-kernel", help="Switch the default kernel."
-    )
-    parser_switch_kernel.add_argument(
-        "kernel_name", help="The name of the kernel to switch to (e.g., 'a' or 'b')."
-    )
-    parser_switch_kernel.add_argument(
-        "--device", help="The target block device (e.g., /dev/sda). If not specified, the primary disk will be used."
-    )
-    parser_switch_kernel.add_argument(
-        "--slot", choices=["a", "b"], help="The slot to modify (a or b). If not specified, both slots will be modified."
-    )
-    parser_switch_kernel.set_defaults(func=handle_switch_kernel)
 
     ext_parser = subparsers.add_parser("ext", help="Manage ObsidianOS extensions.")
     ext_subparsers = ext_parser.add_subparsers(dest="ext_command", required=True)
