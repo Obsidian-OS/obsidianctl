@@ -10,7 +10,8 @@ def handle_status(args):
         "        \033[0;35m###%\033[0;37m  ",
     ]
     info = {}
-    info["Active Slot"] = get_current_slot_systemd()
+    if is_systemd_boot:
+        info["Active Slot"] = get_current_slot_systemd()
     info["Current Slot"] = get_current_slot()
     info["Kernel"] = run_command(
         "uname -r", capture_output=True, text=True
