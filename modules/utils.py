@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+import argparse
 import shutil
 import shlex
 import sys
@@ -7,6 +9,17 @@ import re
 import pwd
 import tempfile
 
+def is_systemd_boot():
+    try:
+        # Run `bootctl status` and capture output
+        output = subprocess.check_output(["bootctl", "status"], stderr=subprocess.DEVNULL, text=True)
+        # If "systemd-boot" or "Boot Loader" appears in output, assume systemd-boot
+        if "systemd-boot" in output or "Boot Loader:" in output:
+            return True
+        return False
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        # bootctl doesn't exist or failed
+        return False
 
 def lordo(
     label, disk=None

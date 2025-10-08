@@ -1,37 +1,36 @@
 all: build
 
 build:
-	echo -e "#!/usr/bin/env python3\nimport argparse" > obsidianctl
-	cat ./modules/utils.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	cat ./modules/utils.py > obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./modules/status.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./modules/dualboot.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./modules/install.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./modules/switch.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./modules/update.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./modules/sync.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./modules/enter.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./modules/netupdate.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./modules/diff.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./modules/backup.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./modules/health.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./modules/systemd-boot-config.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./modules/systemd-boot-config.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./modules/obsiext.py >> obsidianctl
-	echo -e "\n" >> obsidianctl
+	printf "\n" >> obsidianctl
 	cat ./main >> obsidianctl
 	chmod +x obsidianctl
 

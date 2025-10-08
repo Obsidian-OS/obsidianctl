@@ -10,7 +10,8 @@ def handle_status(args):
         "        \033[0;35m###%\033[0;37m  ",
     ]
     info = {}
-    info["Active Slot"] = get_current_slot_systemd()
+    if is_systemd_boot:
+        info["Active Slot"] = get_current_slot_systemd()
     info["Current Slot"] = get_current_slot()
     info["Kernel"] = run_command(
         "uname -r", capture_output=True, text=True
@@ -28,7 +29,7 @@ def handle_status(args):
         info["OS"] = "GNU/Linux"
 
     info["Hostname"] = run_command(
-        "hostnamectl hostname", capture_output=True, text=True
+        "hostname", capture_output=True, text=True
     ).stdout.strip()
     cpu_info = run_command("lscpu", capture_output=True, text=True).stdout
     cpu_model_match = re.search(r"Model name:\s+(.*)", cpu_info)
