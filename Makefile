@@ -1,8 +1,7 @@
 all: build
 
 build:
-	echo > obsidianctl
-	cat ./modules/utils.py >> obsidianctl
+	cat ./modules/utils.py > obsidianctl
 	echo -e "\n" >> obsidianctl
 	cat ./modules/status.py >> obsidianctl
 	echo -e "\n" >> obsidianctl
