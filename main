@@ -173,7 +173,7 @@ def main():
         "run", help="Run a migration script."
     )
     parser_migrate_run.add_argument(
-        "id", type=int, help="The ID of the migration script to run."
+        "id", help="The ID of the migration script to run."
     )
     parser_migrate_run.add_argument(
         "--repo",
