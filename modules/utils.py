@@ -115,7 +115,6 @@ def run_command(command, **kwargs):
         print(f"Error: Command not found for: {command}", file=sys.stderr)
         sys.exit(1)
 
-
 def _get_part_path(device, part_num):
     if "nvme" in device:
         return f"{device}p{part_num}"
@@ -136,36 +135,49 @@ def get_current_slot_systemd():
     return "unknown"
 
 
+#def get_current_slot():
+#    if is_systemd_boot():
+#        return get_current_slot_systemd()
+#    elif is_grub_active():
+#        try:
+#            with open("/proc/cmdline", "r") as f:
+#                cmdline = f.read()
+#            root_match = re.search(r"root=(PARTUUID=)?([a-f0-9\-]+|/dev/[^\s]+)", cmdline)
+#            if root_match:
+#                root_identifier = root_match.group(2)
+#                if "PARTUUID" in root_match.group(0):
+#                    # If it's a PARTUUID, find the device path first
+#                    device_path_output = subprocess.check_output(["blkid", "-t", f"PARTUUID={root_identifier}", "-o", "device"], text=True).strip()
+#                    if device_path_output:
+#                        root_device = device_path_output
+#                    else:
+#                        return "unknown"
+#                else:
+#                    root_device = root_identifier
+#
+#                # Get the label of the root device
+#                label_output = subprocess.check_output(["lsblk", "-no", "LABEL", root_device], text=True).strip()
+#                if "root_a" in label_output:
+#                    return "a"
+#                elif "root_b" in label_output:
+#                    return "b"
+#        except (subprocess.CalledProcessError, FileNotFoundError):
+#            pass
+#    return "unknown"
 def get_current_slot():
-    if is_systemd_boot():
-        return get_current_slot_systemd()
-    elif is_grub_active():
-        try:
-            with open("/proc/cmdline", "r") as f:
-                cmdline = f.read()
-            root_match = re.search(r"root=(PARTUUID=)?([a-f0-9\-]+|/dev/[^\s]+)", cmdline)
-            if root_match:
-                root_identifier = root_match.group(2)
-                if "PARTUUID" in root_match.group(0):
-                    # If it's a PARTUUID, find the device path first
-                    device_path_output = subprocess.check_output(["blkid", "-t", f"PARTUUID={root_identifier}", "-o", "device"], text=True).strip()
-                    if device_path_output:
-                        root_device = device_path_output
-                    else:
-                        return "unknown"
-                else:
-                    root_device = root_identifier
-
-                # Get the label of the root device
-                label_output = subprocess.check_output(["lsblk", "-no", "LABEL", root_device], text=True).strip()
-                if "root_a" in label_output:
-                    return "a"
-                elif "root_b" in label_output:
-                    return "b"
-        except (subprocess.CalledProcessError, FileNotFoundError):
-            pass
+    try:
+        result = subprocess.run(
+            ["findmnt", "-n", "-o", "SOURCE,UUID,PARTUUID,LABEL,PARTLABEL", "/"],
+            capture_output=True, text=True, check=True
+        )
+        for item in result.stdout.split():
+            if "_a" in item:
+                return "a"
+            elif "_b" in item:
+                return "b"
+    except subprocess.CalledProcessError:
+        pass
     return "unknown"
-
 def get_user_home_dir():
     if 'SUDO_USER' in os.environ:
         try:
