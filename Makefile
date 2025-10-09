@@ -25,11 +25,9 @@ build:
 	printf "\n" >> obsidianctl
 	cat ./modules/health.py >> obsidianctl
 	printf "\n" >> obsidianctl
-	cat ./modules/systemd-boot-config.py >> obsidianctl
-	printf "\n" >> obsidianctl
-	cat ./modules/systemd-boot-config.py >> obsidianctl
-	printf "\n" >> obsidianctl
 	cat ./modules/obsiext.py >> obsidianctl
+	printf "\n" >> obsidianctl
+	cat ./modules/migrations.py >> obsidianctl
 	printf "\n" >> obsidianctl
 	cat ./main >> obsidianctl
 	chmod +x obsidianctl

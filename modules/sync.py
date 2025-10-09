@@ -75,4 +75,17 @@ def handle_sync(args):
 
     print(f"Setting label of {target_esp_dev} to {target_esp_label}")
     run_command(f"fatlabel {target_esp_dev} {target_esp_label}")
+
+    if is_grub_active():
+        print(f"Updating GRUB configuration for slot '{target_slot}'...")
+        grub_mount_dir = f"/mnt/obsidian_grub_sync_{target_slot}"
+        run_command(f"mkdir -p {grub_mount_dir}")
+        try:
+            run_command(f"mount {target_root_dev} {grub_mount_dir}")
+            run_command(f"mount {target_esp_dev} {grub_mount_dir}/boot")
+            run_command(f"arch-chroot {grub_mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
+        finally:
+            run_command(f"umount -R {grub_mount_dir}", check=False)
+            run_command(f"rm -r {grub_mount_dir}", check=False)
+
     print("Sync complete.")

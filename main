@@ -27,38 +27,23 @@ def main():
     parser_install.add_argument("--use-grub", action="store_true", help="Setup an grub configuration. (Does not do anything, as grub is the default.)")
     parser_install.add_argument("--use-systemdboot", action="store_true", help="Setup an (DEPRICATED) systemd-boot configuration.")
     parser_install.add_argument("--use-grub2", action="store_true", help="Setup an grub configuration, using grub2-install as some distros maintain both.")
-    parser_install.set_defaults(func=handle_install)
-    if is_systemd_boot(): 
-        parser_switchonce = subparsers.add_parser(
-          "switch-once", help="Switch active boot slot to 'a' or 'b' once only."
-        )
-        parser_switchonce.add_argument(
-            "slot", choices=["a", "b"], help="The slot to make active for once."
-        )
-        parser_switchonce.set_defaults(func=handle_switchonce)
+    parser_install.set_defaults(func=handle_install) 
+    parser_switchonce = subparsers.add_parser(
+      "switch-once", help="Switch active boot slot to 'a' or 'b' once only."
+    )
+    parser_switchonce.add_argument(
+        "slot", choices=["a", "b"], help="The slot to make active for once."
+    )
+    parser_switchonce.set_defaults(func=handle_switchonce)
         
-        parser_switch = subparsers.add_parser(
-            "switch", help="Switch active boot slot to 'a' or 'b'."
-        )
-        parser_switch.add_argument(
-            "slot", choices=["a", "b"], help="The slot to make active."
-        )
-        parser_switch.set_defaults(func=handle_switch)
+    parser_switch = subparsers.add_parser(
+        "switch", help="Switch active boot slot to 'a' or 'b'."
+    )
+    parser_switch.add_argument(
+        "slot", choices=["a", "b"], help="The slot to make active."
+    )
+    parser_switch.set_defaults(func=handle_switch)
 
-        parser_switch_kernel = subparsers.add_parser(
-            "switch-kernel", help="Switch the default kernel."
-        )
-        parser_switch_kernel.add_argument(
-            "kernel_name", help="The name of the kernel to switch to (e.g., 'a' or 'b')."
-        )
-        parser_switch_kernel.add_argument(
-            "--device", help="The target block device (e.g., /dev/sda). If not specified, the primary disk will be used."
-        )
-        parser_switch_kernel.add_argument(
-            "--slot", choices=["a", "b"], help="The slot to modify (a or b). If not specified, both slots will be modified."
-        )
-        parser_switch_kernel.set_defaults(func=handle_switch_kernel)
-        
     parser_diff = subparsers.add_parser(
         "slot-diff", help="Show diff between the two slots."
     )
@@ -177,6 +162,48 @@ def main():
 
     ext_disable_parser = ext_subparsers.add_parser("disable", help="Disable ObsidianOS Overlays on boot.")
     ext_disable_parser.set_defaults(func=handle_ext)
+
+    parser_migrate = subparsers.add_parser(
+        "migrate", help="Manage migration scripts."
+    )
+    migrate_subparsers = parser_migrate.add_subparsers(dest="migrate_command", required=True)
+
+    # Migrate Run subcommand
+    parser_migrate_run = migrate_subparsers.add_parser(
+        "run", help="Run a migration script."
+    )
+    parser_migrate_run.add_argument(
+        "id", help="The ID of the migration script to run."
+    )
+    parser_migrate_run.add_argument(
+        "--repo",
+        default="https://raw.githubusercontent.com/Obsidian-OS/migration/refs/heads/main/migration-{id}.sh",
+        help="URL of the migration script repository. Use {id} as a placeholder for the migration ID.",
+    )
+    parser_migrate_run.add_argument(
+        "--force", action="store_true", help="Force re-run migration even if already applied."
+    )
+    parser_migrate_run.set_defaults(func=handle_migrate)
+
+    # Migrate Rollback subcommand
+    parser_migrate_rollback = migrate_subparsers.add_parser(
+        "rollback", help="Rollback a migration script."
+    )
+    parser_migrate_rollback.add_argument(
+        "id", type=int, help="The ID of the migration script to rollback."
+    )
+    parser_migrate_rollback.add_argument(
+        "--repo",
+        default="https://raw.githubusercontent.com/Obsidian-OS/migration/refs/heads/main/migration-{id}.sh",
+        help="URL of the migration script repository. Use {id} as a placeholder for the migration ID.",
+    )
+    parser_migrate_rollback.set_defaults(func=handle_rollback)
+
+    # Migrate List subcommand
+    parser_migrate_list = migrate_subparsers.add_parser(
+        "list", help="List applied migrations."
+    )
+    parser_migrate_list.set_defaults(func=handle_list_migrations)
 
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)

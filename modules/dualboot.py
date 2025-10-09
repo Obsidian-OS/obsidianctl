@@ -238,134 +238,173 @@ WantedBy=getty.target
         run_command(f"umount {mount_b_dir}", check=False)
         run_command(f"rm -r {mount_b_dir}", check=False)
 
-    print("Installing systemd-boot to ESP_A...")
-    esp_a_mount_dir = "/mnt/obsidian_esp_a"
-    run_command(f"mkdir -p {esp_a_mount_dir}")
-    try:
-        run_command(f"mount {part1} {esp_a_mount_dir}")
-        run_command(
-            f'bootctl --esp-path={esp_a_mount_dir} --efi-boot-option-description="ObsidianOS (Slot A)" install'
-        )
-    finally:
-        run_command(f"umount {esp_a_mount_dir}", check=False)
-        run_command(f"rm -r {esp_a_mount_dir}", check=False)
+    if not args.use_systemdboot:
+        mount_dir="/mnt/obsidianos-install-grub"
+        print("Installing GRUB to ESP_A...")
+        run_command(f"mkdir -p {mount_dir}")
+        mount_commands = [
+            f"mount {lordo('root_a', device)} {mount_dir}/",
+            f"mount {lordo('ESP_A', device)} {mount_dir}/boot",
+            f"mount {lordo('etc_ab', device)} {mount_dir}/etc",
+            f"mount {lordo('var_ab', device)} {mount_dir}/var",
+            f"mount {lordo('home_ab', device)} {mount_dir}/home",
+        ]
+        for cmd in mount_commands:
+            run_command(cmd)
+        if args.use_grub2:
+            run_command(f"arch-chroot {mount_dir} grub2-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
+            run_command(f"arch-chroot {mount_dir} sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
+            run_command(f"arch-chroot {mount_dir} grub2-mkconfig -o /boot/grub/grub.cfg")
+        else:
+            run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
+            run_command(f"arch-chroot {mount_dir} sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
+            run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
+        run_command(f"umount -R {mount_dir}")
+        mount_commands = [
+            f"mount {lordo('root_b', device)} {mount_dir}/",
+            f"mount {lordo('ESP_B', device)} {mount_dir}/boot",
+            f"mount {lordo('etc_ab', device)} {mount_dir}/etc",
+            f"mount {lordo('var_ab', device)} {mount_dir}/var",
+            f"mount {lordo('home_ab', device)} {mount_dir}/home",
+        ]
+        for cmd in mount_commands:
+            run_command(cmd)
+        if args.use_grub2:
+            run_command(f"arch-chroot {mount_dir} grub2-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
+            run_command(f"arch-chroot {mount_dir} grub2-mkconfig -o /boot/grub/grub.cfg")
+        else:
+            run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
+            run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
+        run_command(f"umount -R {mount_dir}")
+    else:
+        print("Installing systemd-boot to ESP_A...")
+        esp_a_mount_dir = "/mnt/obsidian_esp_a"
+        run_command(f"mkdir -p {esp_a_mount_dir}")
+        try:
+            run_command(f"mount {part1} {esp_a_mount_dir}")
+            run_command(
+                f'bootctl --esp-path={esp_a_mount_dir} --efi-boot-option-description="ObsidianOS (Slot A)" install'
+            )
+        finally:
+            run_command(f"umount {esp_a_mount_dir}", check=False)
+            run_command(f"rm -r {esp_a_mount_dir}", check=False)
 
-    print("Installing systemd-boot to ESP_B...")
-    esp_b_mount_dir = "/mnt/obsidian_esp_b"
-    run_command(f"mkdir -p {esp_b_mount_dir}")
-    try:
-        run_command(f"mount {part2} {esp_b_mount_dir}")
-        run_command(
-            f'bootctl --esp-path={esp_b_mount_dir} --efi-boot-option-description="ObsidianOS (Slot B)" install'
-        )
-    finally:
-        run_command(f"umount {esp_b_mount_dir}", check=False)
-        run_command(f"rm -r {esp_b_mount_dir}", check=False)
+        print("Installing systemd-boot to ESP_B...")
+        esp_b_mount_dir = "/mnt/obsidian_esp_b"
+        run_command(f"mkdir -p {esp_b_mount_dir}")
+        try:
+            run_command(f"mount {part2} {esp_b_mount_dir}")
+            run_command(
+                f'bootctl --esp-path={esp_b_mount_dir} --efi-boot-option-description="ObsidianOS (Slot B)" install'
+            )
+        finally:
+            run_command(f"umount {esp_b_mount_dir}", check=False)
+            run_command(f"rm -r {esp_b_mount_dir}", check=False)
 
-    root_a_partuuid = run_command(
-        f"blkid -s PARTUUID -o value {part3}", capture_output=True, text=True
-    ).stdout.strip()
-    root_b_partuuid = run_command(
-        f"blkid -s PARTUUID -o value {part4}", capture_output=True, text=True
-    ).stdout.strip()
-    if not root_a_partuuid or not root_b_partuuid:
-        print(
-            "Could not determine PARTUUIDs for root partitions. Cannot create boot entries.",
-            file=sys.stderr,
-        )
-        sys.exit(1)
+        root_a_partuuid = run_command(
+            f"blkid -s PARTUUID -o value {part3}", capture_output=True, text=True
+        ).stdout.strip()
+        root_b_partuuid = run_command(
+            f"blkid -s PARTUUID -o value {part4}", capture_output=True, text=True
+        ).stdout.strip()
+        if not root_a_partuuid or not root_b_partuuid:
+            print(
+                "Could not determine PARTUUIDs for root partitions. Cannot create boot entries.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
 
-    loader_conf = """
+        loader_conf = """
 timeout 3
 default obsidian-a.conf
 """
-    entry_a_conf = f"""
+        entry_a_conf = f"""
 title ObsidianOS (Slot A)
 linux /vmlinuz-linux
 initrd /initramfs-linux.img
 options root=PARTUUID={root_a_partuuid} rw
 """
-    entry_b_conf = f"""
+        entry_b_conf = f"""
 title ObsidianOS (Slot B)
 linux /vmlinuz-linux
 initrd /initramfs-linux.img
 options root=PARTUUID={root_b_partuuid} rw
 """
 
-    esp_a_config_mount_dir = "/mnt/obsidian_esp_a_config"
-    run_command(f"mkdir -p {esp_a_config_mount_dir}")
-    try:
-        run_command(f"mount {part1} {esp_a_config_mount_dir}")
-        run_command(f"mkdir -p {esp_a_config_mount_dir}/loader/entries")
-        with open(f"{esp_a_config_mount_dir}/loader/loader.conf", "w") as f:
-            f.write(loader_conf)
-        with open(f"{esp_a_config_mount_dir}/loader/entries/obsidian-a.conf", "w") as f:
-            f.write(entry_a_conf)
-        with open(f"{esp_a_config_mount_dir}/loader/entries/obsidian-b.conf", "w") as f:
-            f.write(entry_b_conf)
-    finally:
-        run_command(f"umount {esp_a_config_mount_dir}", check=False)
-        run_command(f"rm -r {esp_a_config_mount_dir}", check=False)
+        esp_a_config_mount_dir = "/mnt/obsidian_esp_a_config"
+        run_command(f"mkdir -p {esp_a_config_mount_dir}")
+        try:
+            run_command(f"mount {part1} {esp_a_config_mount_dir}")
+            run_command(f"mkdir -p {esp_a_config_mount_dir}/loader/entries")
+            with open(f"{esp_a_config_mount_dir}/loader/loader.conf", "w") as f:
+                f.write(loader_conf)
+            with open(f"{esp_a_config_mount_dir}/loader/entries/obsidian-a.conf", "w") as f:
+                f.write(entry_a_conf)
+            with open(f"{esp_a_config_mount_dir}/loader/entries/obsidian-b.conf", "w") as f:
+                f.write(entry_b_conf)
+        finally:
+            run_command(f"umount {esp_a_config_mount_dir}", check=False)
+            run_command(f"rm -r {esp_a_config_mount_dir}", check=False)
 
-    print("Writing boot configuration to ESP_B...")
-    esp_b_config_mount_dir = "/mnt/obsidian_esp_b_config"
-    run_command(f"mkdir -p {esp_b_config_mount_dir}")
-    try:
-        run_command(f"mount {part2} {esp_b_config_mount_dir}")
-        run_command(f"mkdir -p {esp_b_config_mount_dir}/loader/entries")
-        with open(f"{esp_b_config_mount_dir}/loader/loader.conf", "w") as f:
-            f.write(loader_conf)
-        with open(f"{esp_b_config_mount_dir}/loader/entries/obsidian-a.conf", "w") as f:
-            f.write(entry_a_conf)
-        with open(f"{esp_b_config_mount_dir}/loader/entries/obsidian-b.conf", "w") as f:
-            f.write(entry_b_conf)
-    finally:
-        run_command(f"umount {esp_b_config_mount_dir}", check=False)
-        run_command(f"rm -r {esp_b_config_mount_dir}", check=False)
+        print("Writing boot configuration to ESP_B...")
+        esp_b_config_mount_dir = "/mnt/obsidian_esp_b_config"
+        run_command(f"mkdir -p {esp_b_config_mount_dir}")
+        try:
+            run_command(f"mount {part2} {esp_b_config_mount_dir}")
+            run_command(f"mkdir -p {esp_b_config_mount_dir}/loader/entries")
+            with open(f"{esp_b_config_mount_dir}/loader/loader.conf", "w") as f:
+                f.write(loader_conf)
+            with open(f"{esp_b_config_mount_dir}/loader/entries/obsidian-a.conf", "w") as f:
+                f.write(entry_a_conf)
+            with open(f"{esp_b_config_mount_dir}/loader/entries/obsidian-b.conf", "w") as f:
+                f.write(entry_b_conf)
+        finally:
+            run_command(f"umount {esp_b_config_mount_dir}", check=False)
+            run_command(f"rm -r {esp_b_config_mount_dir}", check=False)
 
-    print("Detecting other operating systems...")
-    esp_a_config_mount_dir = "/mnt/obsidian_esp_a_config"
-    esp_b_config_mount_dir = "/mnt/obsidian_esp_b_config"
-    run_command(f"mkdir -p {esp_a_config_mount_dir}")
-    run_command(f"mkdir -p {esp_b_config_mount_dir}")
-    try:
-        run_command(f"mount {part1} {esp_a_config_mount_dir}")
-        run_command(f"mount {part2} {esp_b_config_mount_dir}")
-        os_prober_output = run_command(
-            "os-prober", capture_output=True, text=True
-        ).stdout.strip()
-        if os_prober_output:
-            print("Found other operating systems:")
-            print(os_prober_output)
-            esp_a_entries_path = f"{esp_a_config_mount_dir}/loader/entries"
-            esp_b_entries_path = f"{esp_b_config_mount_dir}/loader/entries"
-            for i, line in enumerate(os_prober_output.splitlines()):
-                parts = line.split(":")
-                if len(parts) >= 3:
-                    device_path = parts[0]
-                    os_name = parts[1]
-                    entry_filename = f"50-other-os-{i}.conf"
-                    entry_content = f"""title {os_name}
-efi {device_path}
-"""
-                    with open(f"{esp_a_entries_path}/{entry_filename}", "w") as f:
-                        f.write(entry_content)
-                    with open(f"{esp_b_entries_path}/{entry_filename}", "w") as f:
-                        f.write(entry_content)
-                    print(f"Created boot entry for {os_name}")
+        print("Detecting other operating systems...")
+        esp_a_config_mount_dir = "/mnt/obsidian_esp_a_config"
+        esp_b_config_mount_dir = "/mnt/obsidian_esp_b_config"
+        run_command(f"mkdir -p {esp_a_config_mount_dir}")
+        run_command(f"mkdir -p {esp_b_config_mount_dir}")
+        try:
+            run_command(f"mount {part1} {esp_a_config_mount_dir}")
+            run_command(f"mount {part2} {esp_b_config_mount_dir}")
+            os_prober_output = run_command(
+                "os-prober", capture_output=True, text=True
+            ).stdout.strip()
+            if os_prober_output:
+                print("Found other operating systems:")
+                print(os_prober_output)
+                esp_a_entries_path = f"{esp_a_config_mount_dir}/loader/entries"
+                esp_b_entries_path = f"{esp_b_config_mount_dir}/loader/entries"
+                for i, line in enumerate(os_prober_output.splitlines()):
+                    parts = line.split(":")
+                    if len(parts) >= 3:
+                        device_path = parts[0]
+                        os_name = parts[1]
+                        entry_filename = f"50-other-os-{i}.conf"
+                        entry_content = f"""title {os_name}
+                        efi {device_path}
+                        """                        
+                        with open(f"{esp_a_entries_path}/{entry_filename}", "w") as f:
+                            f.write(entry_content)
+                        with open(f"{esp_b_entries_path}/{entry_filename}", "w") as f:
+                            f.write(entry_content)
+                        print(f"Created boot entry for {os_name}")
 
-        else:
-            print("No other operating systems found.")
-    except Exception as e:
-        print(f"Error running os-prober: {e}")
-        print("Please make sure os-prober is installed.")
-    finally:
-        run_command(f"umount {esp_a_config_mount_dir}", check=False)
-        run_command(f"rm -r {esp_a_config_mount_dir}", check=False)
-        run_command(f"umount {esp_b_config_mount_dir}", check=False)
-        run_command(f"rm -r {esp_b_config_mount_dir}", check=False)
+            else:
+                print("No other operating systems found.")
+        except Exception as e:
+            print(f"Error running os-prober: {e}")
+            print("Please make sure os-prober is installed.")
+        finally:
+            run_command(f"umount {esp_a_config_mount_dir}", check=False)
+            run_command(f"rm -r {esp_a_config_mount_dir}", check=False)
+            run_command(f"umount {esp_b_config_mount_dir}", check=False)
+            run_command(f"rm -r {esp_b_config_mount_dir}", check=False)
 
-    run_command(f"rm -r {mount_dir}", check=False)
-    print("\nInstallation complete!")
-    print("Default boot order will attempt Slot A, then Slot B.")
-    print("Reboot your system to apply changes.")
+        run_command(f"rm -r {mount_dir}", check=False)
+        print("\nInstallation complete!")
+        print("Default boot order will attempt Slot A, then Slot B.")
+        print("Reboot your system to apply changes.")

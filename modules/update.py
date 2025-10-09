@@ -90,6 +90,18 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
             run_command(f"umount {esp_tmp_mount}", check=False)
             run_command(f"rmdir {esp_tmp_mount}", check=False)
 
+        if is_grub_active():
+            print(f"Updating GRUB configuration for slot '{slot}'...")
+            grub_mount_dir = f"/mnt/obsidian_grub_update_{slot}"
+            run_command(f"mkdir -p {grub_mount_dir}")
+            try:
+                run_command(f"mount /dev/disk/by-label/{target_label} {grub_mount_dir}")
+                run_command(f"mount /dev/disk/by-label/{esp_label} {grub_mount_dir}/boot")
+                run_command(f"arch-chroot {grub_mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
+            finally:
+                run_command(f"umount -R {grub_mount_dir}", check=False)
+                run_command(f"rm -r {grub_mount_dir}", check=False)
+
     finally:
         print("Unmounting partition...")
         run_command(f"umount -R {mount_dir}", check=False)
