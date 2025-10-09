@@ -9,6 +9,28 @@ import re
 import pwd
 import tempfile
 
+MIGRATION_LOG_FILE = "/etc/obsidianctl/migrations/applied.log"
+
+def get_applied_migrations():
+    if not os.path.exists(MIGRATION_LOG_FILE):
+        return []
+    with open(MIGRATION_LOG_FILE, "r") as f:
+        return [line.strip() for line in f if line.strip()]
+
+def record_applied_migration(migration_id):
+    os.makedirs(os.path.dirname(MIGRATION_LOG_FILE), exist_ok=True)
+    with open(MIGRATION_LOG_FILE, "a") as f:
+        f.write(f"{migration_id}\n")
+
+def remove_applied_migration(migration_id):
+    if not os.path.exists(MIGRATION_LOG_FILE):
+        return
+    migrations = get_applied_migrations()
+    with open(MIGRATION_LOG_FILE, "w") as f:
+        for mid in migrations:
+            if mid != str(migration_id):
+                f.write(f"{mid}\n")
+
 def is_systemd_boot():
     try:
         # Run `bootctl status` and capture output

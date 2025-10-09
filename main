@@ -177,6 +177,48 @@ def main():
     ext_disable_parser = ext_subparsers.add_parser("disable", help="Disable ObsidianOS Overlays on boot.")
     ext_disable_parser.set_defaults(func=handle_ext)
 
+    parser_migrate = subparsers.add_parser(
+        "migrate", help="Manage migration scripts."
+    )
+    migrate_subparsers = parser_migrate.add_subparsers(dest="migrate_command", required=True)
+
+    # Migrate Run subcommand
+    parser_migrate_run = migrate_subparsers.add_parser(
+        "run", help="Run a migration script."
+    )
+    parser_migrate_run.add_argument(
+        "id", type=int, help="The ID of the migration script to run."
+    )
+    parser_migrate_run.add_argument(
+        "--repo",
+        default="https://raw.githubusercontent.com/Obsidian-OS/migration/refs/heads/main/migration-{id}.sh",
+        help="URL of the migration script repository. Use {id} as a placeholder for the migration ID.",
+    )
+    parser_migrate_run.add_argument(
+        "--force", action="store_true", help="Force re-run migration even if already applied."
+    )
+    parser_migrate_run.set_defaults(func=handle_migrate)
+
+    # Migrate Rollback subcommand
+    parser_migrate_rollback = migrate_subparsers.add_parser(
+        "rollback", help="Rollback a migration script."
+    )
+    parser_migrate_rollback.add_argument(
+        "id", type=int, help="The ID of the migration script to rollback."
+    )
+    parser_migrate_rollback.add_argument(
+        "--repo",
+        default="https://raw.githubusercontent.com/Obsidian-OS/migration/refs/heads/main/migration-{id}.sh",
+        help="URL of the migration script repository. Use {id} as a placeholder for the migration ID.",
+    )
+    parser_migrate_rollback.set_defaults(func=handle_rollback)
+
+    # Migrate List subcommand
+    parser_migrate_list = migrate_subparsers.add_parser(
+        "list", help="List applied migrations."
+    )
+    parser_migrate_list.set_defaults(func=handle_list_migrations)
+
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
