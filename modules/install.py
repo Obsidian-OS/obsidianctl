@@ -261,9 +261,11 @@ WantedBy=getty.target
             run_command(cmd)
         if args.use_grub2:
             run_command(f"arch-chroot {mount_dir} grub2-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
+            run_command(f"arch-chroot {mount_dir} sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
             run_command(f"arch-chroot {mount_dir} grub2-mkconfig -o /boot/grub/grub.cfg")
         else:
             run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
+            run_command(f"arch-chroot {mount_dir} sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
             run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
         mount_commands = [
