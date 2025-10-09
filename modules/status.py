@@ -33,7 +33,7 @@ def handle_status(args):
         info["OS"] = "GNU/Linux"
 
     info["Hostname"] = run_command(
-        "hostname", capture_output=True, text=True
+        "cat /etc/hostname", capture_output=True, text=True
     ).stdout.strip()
     cpu_info = run_command("lscpu", capture_output=True, text=True).stdout
     cpu_model_match = re.search(r"Model name:\s+(.*)", cpu_info)
