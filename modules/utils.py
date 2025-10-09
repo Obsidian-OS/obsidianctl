@@ -31,16 +31,27 @@ def remove_applied_migration(migration_id):
             if mid != str(migration_id):
                 f.write(f"{mid}\n")
 
+def is_grub_available():
+    return shutil.which("grub-install") is not None or shutil.which("grub2-install") is not None
+
+def is_grub_active():
+    if os.path.exists("/boot/grub/grub.cfg"):
+        return True
+    try:
+        efibootmgr_output = subprocess.check_output(["efibootmgr", "-v"], text=True)
+        if "grub" in efibootmgr_output.lower():
+            return True
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        pass
+    return False
+
 def is_systemd_boot():
     try:
-        # Run `bootctl status` and capture output
         output = subprocess.check_output(["bootctl", "status"], stderr=subprocess.DEVNULL, text=True)
-        # If "systemd-boot" or "Boot Loader" appears in output, assume systemd-boot
         if "systemd-boot" in output or "Boot Loader:" in output:
             return True
         return False
     except (FileNotFoundError, subprocess.CalledProcessError):
-        # bootctl doesn't exist or failed
         return False
 
 def lordo(
@@ -126,19 +137,33 @@ def get_current_slot_systemd():
 
 
 def get_current_slot():
-    try:
-        findmnt_output = subprocess.check_output(
-            ["findmnt", "-n", "-o", "SOURCE,UUID,PARTUUID,LABEL,PARTLABEL", "/"],
-            text=True,
-        ).strip()
-        for item in findmnt_output.split():
-            if "_a" in item:
-                return "a"
-            elif "_b" in item:
-                return "b"
+    if is_systemd_boot():
+        return get_current_slot_systemd()
+    elif is_grub_active():
+        try:
+            with open("/proc/cmdline", "r") as f:
+                cmdline = f.read()
+            root_match = re.search(r"root=(PARTUUID=)?([a-f0-9\-]+|/dev/[^\s]+)", cmdline)
+            if root_match:
+                root_identifier = root_match.group(2)
+                if "PARTUUID" in root_match.group(0):
+                    # If it's a PARTUUID, find the device path first
+                    device_path_output = subprocess.check_output(["blkid", "-t", f"PARTUUID={root_identifier}", "-o", "device"], text=True).strip()
+                    if device_path_output:
+                        root_device = device_path_output
+                    else:
+                        return "unknown"
+                else:
+                    root_device = root_identifier
 
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        pass
+                # Get the label of the root device
+                label_output = subprocess.check_output(["lsblk", "-no", "LABEL", root_device], text=True).strip()
+                if "root_a" in label_output:
+                    return "a"
+                elif "root_b" in label_output:
+                    return "b"
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            pass
     return "unknown"
 
 def get_user_home_dir():
