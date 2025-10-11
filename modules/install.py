@@ -18,9 +18,6 @@ def handle_mkobsidiansfs(args):
 
 def handle_install(args):
     checkroot()
-    fstype="ext4"
-    if args.use_f2fs:
-        fstype="f2fs"
     device = args.device
     system_sfs = args.system_sfs or "/etc/system.sfs"
     _, ext = os.path.splitext(system_sfs)
@@ -44,6 +41,14 @@ def handle_install(args):
     if confirm.lower() != "y":
         print("Installation aborted.")
         sys.exit(0)
+    fstype="ext4"
+    if args.use_f2fs:
+        print(f"WARNING: F2FS is a filesystem ONLY for fragile NAND.")
+        confirm = input("This is only for advanced users. Are you sure you want to proceed? (y/N): ")
+        if confirm.lower() != "y":
+            fstype="ext4"
+        else:
+            fstype="f2fs"
     print("Partitioning device...")
     partition_table = f"""
 label: gpt
