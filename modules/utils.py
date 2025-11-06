@@ -35,7 +35,7 @@ def is_grub_available():
     return shutil.which("grub-install") is not None or shutil.which("grub2-install") is not None
 
 def is_grub_active():
-    if os.path.exists("/boot/grub/grub.cfg"):
+    if os.path.exists("/efi/grub/grub.cfg"):
         return True
     try:
         efibootmgr_output = subprocess.check_output(["efibootmgr", "-v"], text=True)

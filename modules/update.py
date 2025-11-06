@@ -61,7 +61,7 @@ def handle_update(args):
         print(f"Generating fstab for slot '{slot}'...")
         fstab_content = f"""
 LABEL={target_label}  /      {fstype}  defaults,noatime 0 1
-LABEL={esp_label}     /boot  vfat  defaults,noatime 0 2
+LABEL={esp_label}     /efi  vfat  defaults,noatime 0 2
 LABEL=etc_ab  /etc   {fstype}  defaults,noatime 0 2
 LABEL=var_ab  /var   {fstype}  defaults,noatime 0 2
 LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
@@ -85,7 +85,7 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
         run_command(f"mkdir -p {esp_tmp_mount}")
         try:
             run_command(f"mount /dev/disk/by-label/ESP_{slot.upper()} {esp_tmp_mount}")
-            run_command(f"rsync -aK --delete {mount_dir}/boot/ {esp_tmp_mount}/")
+            run_command(f"rsync -aK --delete {mount_dir}/efi/ {esp_tmp_mount}/")
         finally:
             run_command(f"umount {esp_tmp_mount}", check=False)
             run_command(f"rmdir {esp_tmp_mount}", check=False)
@@ -96,8 +96,8 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
             run_command(f"mkdir -p {grub_mount_dir}")
             try:
                 run_command(f"mount /dev/disk/by-label/{target_label} {grub_mount_dir}")
-                run_command(f"mount /dev/disk/by-label/{esp_label} {grub_mount_dir}/boot")
-                run_command(f"arch-chroot {grub_mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
+                run_command(f"mount /dev/disk/by-label/{esp_label} {grub_mount_dir}/efi")
+                run_command(f"arch-chroot {grub_mount_dir} grub-mkconfig -o /efi/grub/grub.cfg")
             finally:
                 run_command(f"umount -R {grub_mount_dir}", check=False)
                 run_command(f"rm -r {grub_mount_dir}", check=False)

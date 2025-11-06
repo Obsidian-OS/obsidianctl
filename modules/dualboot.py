@@ -82,7 +82,7 @@ label: gpt
     print("Generating fstab for slot 'a'...")
     fstab_content_a = """
 LABEL=root_a  /      {fstype}  defaults,noatime 0 1
-LABEL=ESP_A     /boot  vfat  defaults,noatime 0 2
+LABEL=ESP_A     /efi  vfat  defaults,noatime 0 2
 LABEL=etc_ab  /etc   {fstype}  defaults,noatime 0 2
 LABEL=var_ab  /var   {fstype}  defaults,noatime 0 2
 LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
@@ -107,7 +107,7 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
     run_command(f"mkdir -p {esp_tmp_mount}")
     try:
         run_command(f"mount /dev/disk/by-label/ESP_A {esp_tmp_mount}")
-        run_command(f"rsync -aK --delete {mount_dir}/boot/ {esp_tmp_mount}/")
+        run_command(f"rsync -aK --delete {mount_dir}/efi/ {esp_tmp_mount}/")
     finally:
         run_command(f"umount {esp_tmp_mount}", check=False)
         run_command(f"rmdir {esp_tmp_mount}", check=False)
@@ -117,18 +117,18 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
     run_command(f"mkdir -p {esp_b_tmp_mount}")
     try:
         run_command(f"mount /dev/disk/by-label/ESP_B {esp_b_tmp_mount}")
-        run_command(f"rsync -aK --delete {mount_dir}/boot/ {esp_b_tmp_mount}/")
+        run_command(f"rsync -aK --delete {mount_dir}/efi/ {esp_b_tmp_mount}/")
     finally:
         run_command(f"umount {esp_b_tmp_mount}", check=False)
         run_command(f"rmdir {esp_b_tmp_mount}", check=False)
 
     print("Mounting shared partitions for potential chroot...")
     mount_commands = [
-        f"mkdir -p {mount_dir}/boot",
+        f"mkdir -p {mount_dir}/efi",
         f"mkdir -p {mount_dir}/etc",
         f"mkdir -p {mount_dir}/var",
         f"mkdir -p {mount_dir}/home",
-        f"mount /dev/disk/by-label/ESP_A {mount_dir}/boot",
+        f"mount /dev/disk/by-label/ESP_A {mount_dir}/efi",
         f"mount /dev/disk/by-label/etc_ab {mount_dir}/etc",
         f"mount /dev/disk/by-label/var_ab {mount_dir}/var",
         f"mount /dev/disk/by-label/home_ab {mount_dir}/home",
@@ -244,7 +244,7 @@ WantedBy=getty.target
         run_command(f"mkdir -p {mount_dir}")
         mount_commands = [
             f"mount {lordo('root_a', device)} {mount_dir}/",
-            f"mount {lordo('ESP_A', device)} {mount_dir}/boot",
+            f"mount {lordo('ESP_A', device)} {mount_dir}/efi",
             f"mount {lordo('etc_ab', device)} {mount_dir}/etc",
             f"mount {lordo('var_ab', device)} {mount_dir}/var",
             f"mount {lordo('home_ab', device)} {mount_dir}/home",
@@ -252,17 +252,17 @@ WantedBy=getty.target
         for cmd in mount_commands:
             run_command(cmd)
         if args.use_grub2:
-            run_command(f"arch-chroot {mount_dir} grub2-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
+            run_command(f"arch-chroot {mount_dir} grub2-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotA")
             run_command(f"arch-chroot {mount_dir} sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
-            run_command(f"arch-chroot {mount_dir} grub2-mkconfig -o /boot/grub/grub.cfg")
+            run_command(f"arch-chroot {mount_dir} grub2-mkconfig -o /efi/grub/grub.cfg")
         else:
-            run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
+            run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotA")
             run_command(f"arch-chroot {mount_dir} sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
-            run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
+            run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /efi/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
         mount_commands = [
             f"mount {lordo('root_b', device)} {mount_dir}/",
-            f"mount {lordo('ESP_B', device)} {mount_dir}/boot",
+            f"mount {lordo('ESP_B', device)} {mount_dir}/efi",
             f"mount {lordo('etc_ab', device)} {mount_dir}/etc",
             f"mount {lordo('var_ab', device)} {mount_dir}/var",
             f"mount {lordo('home_ab', device)} {mount_dir}/home",
@@ -270,11 +270,11 @@ WantedBy=getty.target
         for cmd in mount_commands:
             run_command(cmd)
         if args.use_grub2:
-            run_command(f"arch-chroot {mount_dir} grub2-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
-            run_command(f"arch-chroot {mount_dir} grub2-mkconfig -o /boot/grub/grub.cfg")
+            run_command(f"arch-chroot {mount_dir} grub2-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotA")
+            run_command(f"arch-chroot {mount_dir} grub2-mkconfig -o /efi/grub/grub.cfg")
         else:
-            run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ObsidianOSslotA")
-            run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
+            run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotA")
+            run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /efi/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
     else:
         print("Installing systemd-boot to ESP_A...")
