@@ -10,7 +10,6 @@ def main():
         "status", help="Show current active slot and system info."
     )
     parser_status.set_defaults(func=handle_status)
-
     parser_install = subparsers.add_parser(
         "install", help="Partition device and install system image."
     )
@@ -35,7 +34,6 @@ def main():
         "slot", choices=["a", "b"], help="The slot to make active for once."
     )
     parser_switchonce.set_defaults(func=handle_switchonce)
-        
     parser_switch = subparsers.add_parser(
         "switch", help="Switch active boot slot to 'a' or 'b'."
     )
@@ -43,12 +41,10 @@ def main():
         "slot", choices=["a", "b"], help="The slot to make active."
     )
     parser_switch.set_defaults(func=handle_switch)
-
     parser_diff = subparsers.add_parser(
         "slot-diff", help="Show diff between the two slots."
     )
     parser_diff.set_defaults(func=handle_slot_diff)
-    
     parser_backup = subparsers.add_parser(
         "backup-slot", help="Create a backup of a specific slot."
     )
@@ -63,7 +59,6 @@ def main():
     )
     parser_backup.add_argument("--full-backup", action="store_true", help="Backup your ENTIRE SYSTEM. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
     parser_backup.set_defaults(func=handle_backup_slot)
-    
     parser_rollback = subparsers.add_parser(
         "rollback-slot", help="Rollback a slot to a previous backup."
     )
@@ -77,7 +72,6 @@ def main():
         "--device", help="Drive (not partition) to rollback (default: current drive)."
     )
     parser_rollback.set_defaults(func=handle_rollback_slot)
-    
     parser_health = subparsers.add_parser(
         "health-check", help="Check the health of both A/B slots."
     )
@@ -142,33 +136,24 @@ def main():
         "--break-system", action="store_true", help="Forcibly update even if not using an default system.sfs."
     )
     parser_netupdate.set_defaults(func=handle_netupdate)
-
     ext_parser = subparsers.add_parser("ext", help="Manage ObsidianOS extensions.")
     ext_subparsers = ext_parser.add_subparsers(dest="ext_command", required=True)
-
     ext_add_parser = ext_subparsers.add_parser("add", help="Add an ObsidianOS extension.")
     ext_add_parser.add_argument("path", help="Path to the .obsiext file.")
     ext_add_parser.set_defaults(func=handle_ext)
-
     ext_rm_parser = ext_subparsers.add_parser("rm", help="Remove an ObsidianOS extension.")
     ext_rm_parser.add_argument("name", help="Name of the extension to remove.")
     ext_rm_parser.set_defaults(func=handle_ext)
-
     ext_list_parser = ext_subparsers.add_parser("list", help="List installed ObsidianOS extensions.")
     ext_list_parser.set_defaults(func=handle_ext)
-
     ext_enable_parser = ext_subparsers.add_parser("enable", help="Enable ObsidianOS Overlays on boot.")
     ext_enable_parser.set_defaults(func=handle_ext)
-
     ext_disable_parser = ext_subparsers.add_parser("disable", help="Disable ObsidianOS Overlays on boot.")
     ext_disable_parser.set_defaults(func=handle_ext)
-
     parser_migrate = subparsers.add_parser(
         "migrate", help="Manage migration scripts."
     )
     migrate_subparsers = parser_migrate.add_subparsers(dest="migrate_command", required=True)
-
-    # Migrate Run subcommand
     parser_migrate_run = migrate_subparsers.add_parser(
         "run", help="Run a migration script."
     )
@@ -184,13 +169,11 @@ def main():
         "--force", action="store_true", help="Force re-run migration even if already applied."
     )
     parser_migrate_run.set_defaults(func=handle_migrate)
-
-    # Migrate Rollback subcommand
     parser_migrate_rollback = migrate_subparsers.add_parser(
         "rollback", help="Rollback a migration script."
     )
     parser_migrate_rollback.add_argument(
-        "id", type=int, help="The ID of the migration script to rollback."
+        "id", help="The ID of the migration script to rollback."
     )
     parser_migrate_rollback.add_argument(
         "--repo",
@@ -198,13 +181,10 @@ def main():
         help="URL of the migration script repository. Use {id} as a placeholder for the migration ID.",
     )
     parser_migrate_rollback.set_defaults(func=handle_rollback)
-
-    # Migrate List subcommand
     parser_migrate_list = migrate_subparsers.add_parser(
         "list", help="List applied migrations."
     )
     parser_migrate_list.set_defaults(func=handle_list_migrations)
-
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)
