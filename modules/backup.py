@@ -36,7 +36,7 @@ def handle_backup_slot(args):
         if full_backup:
             run_command(f"mount {var_path}  {mount_dir}/var" )
             run_command(f"mount {etc_path}  {mount_dir}/etc" )
-            run_command(f"mount {esp_path}  {mount_dir}/boot")
+            run_command(f"mount {esp_path}  {mount_dir}{EFI_DIR} --mkdir")
             run_command(f"mount {home_path} {mount_dir}/home")
         print(f"Creating backup archive at {backup_path}.sfs...")
         run_command(
@@ -146,10 +146,10 @@ def handle_rollback_slot(args):
         run_command(f"mkfs.{fstype} -F {part_path} -L root_{slot}")
         run_command(f"mount {part_path} {mount_dir}")
         print("Copying root filesystem contents...")
-        run_command(f"rsync -aAXv --exclude=/boot --exclude=/home --exclude=/etc --exclude=/var {temp_extract_dir}/ {mount_dir}/")
+        run_command(f"rsync -aAXv --exclude=/boot --exclude=/efi --exclude=/home --exclude=/etc --exclude=/var {temp_extract_dir}/ {mount_dir}/")
         if is_full_backup:
             partitions_to_restore = {
-                "ESP": {"path": esp_path, "source_dir": "boot"},
+                "ESP": {"path": esp_path, "source_dir": "efi"},
                 "home": {"path": home_path, "source_dir": "home"},
                 "etc": {"path": etc_path, "source_dir": "etc"},
                 "var": {"path": var_path, "source_dir": "var"},

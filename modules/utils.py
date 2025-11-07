@@ -9,6 +9,11 @@ import re
 import pwd
 import tempfile
 
+if os.path.exists("/efi"):
+    EFI_DIR = "/efi"
+else:
+    EFI_DIR = "/boot"
+
 MIGRATION_LOG_FILE = "/etc/obsidianctl/migrations/applied.log"
 
 def get_applied_migrations():
@@ -35,7 +40,7 @@ def is_grub_available():
     return shutil.which("grub-install") is not None or shutil.which("grub2-install") is not None
 
 def is_grub_active():
-    if os.path.exists("/boot/grub/grub.cfg"):
+    if os.path.exists(f"{EFI_DIR}/grub/grub.cfg"):
         return True
     try:
         efibootmgr_output = subprocess.check_output(["efibootmgr", "-v"], text=True)
