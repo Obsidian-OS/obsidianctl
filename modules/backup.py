@@ -36,7 +36,7 @@ def handle_backup_slot(args):
         if full_backup:
             run_command(f"mount {var_path}  {mount_dir}/var" )
             run_command(f"mount {etc_path}  {mount_dir}/etc" )
-            run_command(f"mount {esp_path}  {mount_dir}/efi --mkdir")
+            run_command(f"mount {esp_path}  {mount_dir}{EFI_DIR} --mkdir")
             run_command(f"mount {home_path} {mount_dir}/home")
         print(f"Creating backup archive at {backup_path}.sfs...")
         run_command(

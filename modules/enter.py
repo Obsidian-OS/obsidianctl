@@ -3,7 +3,6 @@ import subprocess
 import shutil
 import sys
 import time
-
 def handle_enter(args):
     if os.geteuid() != 0:
         print("This command must be run as root.", file=sys.stderr)
@@ -27,7 +26,7 @@ def handle_enter(args):
 
     try:
         subprocess.run(["mount", root_partition, mount_point], check=True)
-        subprocess.run(["mount", esp_partition, f"{mount_point}/efi", "--mkdir"], check=True)
+        subprocess.run(["mount", esp_partition, f"{mount_point}{EFI_DIR}", "--mkdir"], check=True)
 
         for shared_part in ["etc_ab", "var_ab", "home_ab"]:
             shared_partition = lordo(shared_part)

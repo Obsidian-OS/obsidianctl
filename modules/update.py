@@ -1,3 +1,7 @@
+import sys
+import os
+import shutil
+import subprocess
 def handle_update_mkobsidiansfs(args):
     if shutil.which("mkobsidiansfs"):
         os.system(f"mkobsidiansfs {args.system_sfs} system.sfs")
@@ -85,7 +89,7 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
         run_command(f"mkdir -p {esp_tmp_mount}")
         try:
             run_command(f"mount /dev/disk/by-label/ESP_{slot.upper()} {esp_tmp_mount}")
-            run_command(f"rsync -aK --delete {mount_dir}/efi/ {esp_tmp_mount}/")
+            run_command(f"rsync -aK --delete {mount_dir}{EFI_DIR}/ {esp_tmp_mount}/")
         finally:
             run_command(f"umount {esp_tmp_mount}", check=False)
             run_command(f"rmdir {esp_tmp_mount}", check=False)
@@ -96,8 +100,8 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
             run_command(f"mkdir -p {grub_mount_dir}")
             try:
                 run_command(f"mount /dev/disk/by-label/{target_label} {grub_mount_dir}")
-                run_command(f"mount /dev/disk/by-label/{esp_label} {grub_mount_dir}/efi")
-                run_command(f"arch-chroot {grub_mount_dir} grub-mkconfig -o /efi/grub/grub.cfg")
+                run_command(f"mount /dev/disk/by-label/{esp_label} {grub_mount_dir}{EFI_DIR}")
+                run_command(f"arch-chroot {grub_mount_dir} grub-mkconfig -o {EFI_DIR}/grub/grub.cfg")
             finally:
                 run_command(f"umount -R {grub_mount_dir}", check=False)
                 run_command(f"rm -r {grub_mount_dir}", check=False)
