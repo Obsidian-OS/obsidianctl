@@ -107,7 +107,7 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
     run_command(f"mkdir -p {esp_tmp_mount}")
     try:
         run_command(f"mount /dev/disk/by-label/ESP_A {esp_tmp_mount}")
-        run_command(f"rsync -aK --delete {mount_dir}/efi/ {esp_tmp_mount}/")
+        run_command(f"rsync -aK --delete {mount_dir}/boot/ {esp_tmp_mount}/")
     finally:
         run_command(f"umount {esp_tmp_mount}", check=False)
         run_command(f"rmdir {esp_tmp_mount}", check=False)
@@ -117,7 +117,7 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
     run_command(f"mkdir -p {esp_b_tmp_mount}")
     try:
         run_command(f"mount /dev/disk/by-label/ESP_B {esp_b_tmp_mount}")
-        run_command(f"rsync -aK --delete {mount_dir}/efi/ {esp_b_tmp_mount}/")
+        run_command(f"rsync -aK --delete {mount_dir}/boot/ {esp_b_tmp_mount}/")
     finally:
         run_command(f"umount {esp_b_tmp_mount}", check=False)
         run_command(f"rmdir {esp_b_tmp_mount}", check=False)
