@@ -280,7 +280,7 @@ WantedBy=getty.target
             run_command(f"mkdir {mount_dir}/efi/grub/ -p")
             run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /efi/grub/grub.cfg")
         run_command(f"mkdir {mount_dir}/boot/grub/ -p")
-        run_command(f"arch-chroot {mount_dir} ln -sf ln -sf /efi/grub/grub.cfg /boot/grub/grub.cfg")
+        run_command(f"arch-chroot {mount_dir} ln -sf /efi/grub/grub.cfg /boot/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
     else:
         print("Installing systemd-boot to ESP_A...")
