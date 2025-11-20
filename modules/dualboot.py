@@ -80,7 +80,7 @@ label: gpt
     print(f"Extracting system from {system_sfs} to slot 'a'...")
     run_command(f"unsquashfs -f -d {mount_dir} -no-xattrs {system_sfs}")
     print("Generating fstab for slot 'a'...")
-    fstab_content_a = """
+    fstab_content_a = f"""
 LABEL=root_a  /      {fstype}  defaults,noatime 0 1
 LABEL=ESP_A     /efi  vfat  defaults,noatime 0 2
 LABEL=etc_ab  /etc   {fstype}  defaults,noatime 0 2
