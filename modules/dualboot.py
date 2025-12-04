@@ -83,7 +83,7 @@ label: gpt
     fstab_content_a = f"""
 LABEL=root_a  /      {fstype}  defaults,noatime 0 1
 LABEL=ESP_A     /efi  vfat  defaults,noatime 0 2
-LABEL=etc_ab  /etc   {fstype}  defaults,noatime 0 2
+LABEL=etc_ab  /run/etc_ab   {fstype}  defaults,noatime 0 2
 LABEL=var_ab  /var   {fstype}  defaults,noatime 0 2
 LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
 """
@@ -129,7 +129,7 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
         f"mkdir -p {mount_dir}/var",
         f"mkdir -p {mount_dir}/home",
         f"mount /dev/disk/by-label/ESP_A {mount_dir}/efi",
-        f"mount /dev/disk/by-label/etc_ab {mount_dir}/etc",
+        f"mount /dev/disk/by-label/etc_ab {mount_dir}/run/etc_ab --mkdir",
         f"mount /dev/disk/by-label/var_ab {mount_dir}/var",
         f"mount /dev/disk/by-label/home_ab {mount_dir}/home",
     ]
@@ -164,33 +164,6 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
             f"Warning: ObsidianOS Logo file wasn't found. Skipping.",
             file=sys.stderr,
         )
-    
-    run_command(f"umount {mount_dir}/etc", check=False)
-
-    autostart_service_content = """[Unit]
-Description=Force start all enabled services before TTY login
-DefaultDependencies=no
-After=basic.target
-Before=getty.target
-
-[Service]
-Type=oneshot
-ExecStart=/bin/sh -c 'systemctl list-unit-files --state=enabled | awk \"{print $1}\" | grep -E ".service$" | xargs -r systemctl start'
-
-[Install]
-WantedBy=getty.target
-"""
-    
-    service_file_path = f"{mount_dir}/etc/systemd/system/obsidianos-autostart.service"
-    run_command(f"mkdir -p {os.path.dirname(service_file_path)}")
-    with open(service_file_path, "w") as f:
-        f.write(autostart_service_content)
-
-    
-    run_command(f"systemctl enable obsidianos-autostart.service --root={mount_dir}")
-
-    
-    run_command(f"mount /dev/disk/by-label/etc_ab {mount_dir}/etc")
 
     print("\nSlot 'a' is now configured and mounted.")
     chroot_confirm = input(
@@ -245,7 +218,7 @@ WantedBy=getty.target
         mount_commands = [
             f"mount {lordo('root_a', device)} {mount_dir}/",
             f"mount {lordo('ESP_A', device)} {mount_dir}/efi",
-            f"mount {lordo('etc_ab', device)} {mount_dir}/etc",
+            f"mount {lordo('etc_ab', device)} {mount_dir}/run/etc_ab --mkdir",
             f"mount {lordo('var_ab', device)} {mount_dir}/var",
             f"mount {lordo('home_ab', device)} {mount_dir}/home",
         ]
@@ -267,7 +240,7 @@ WantedBy=getty.target
         mount_commands = [
             f"mount {lordo('root_b', device)} {mount_dir}/",
             f"mount {lordo('ESP_B', device)} {mount_dir}/efi",
-            f"mount {lordo('etc_ab', device)} {mount_dir}/etc",
+            f"mount {lordo('etc_ab', device)} {mount_dir}/run/etc_ab --mkdir",
             f"mount {lordo('var_ab', device)} {mount_dir}/var",
             f"mount {lordo('home_ab', device)} {mount_dir}/home",
         ]
