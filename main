@@ -185,6 +185,14 @@ def main():
         "list", help="List applied migrations."
     )
     parser_migrate_list.set_defaults(func=handle_list_migrations)
+    
+    parser_etc_ab = subparsers.add_parser(
+        "share", help="Turn a file inside /etc from slot-specific to shared."
+    )
+    parser_etc_ab.add_argument(
+        "file_path", help="Path to the file relative to /etc/ (e.g., 'hosts', 'nginx/nginx.conf')."
+    )
+    parser_etc_ab.set_defaults(func=handle_etc_ab)
     if len(sys.argv) == 1:
         parser.print_help(sys.stderr)
         sys.exit(1)

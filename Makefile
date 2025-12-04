@@ -29,6 +29,8 @@ build:
 	@printf "\n" >> obsidianctl
 	@cat ./modules/migrations.py >> obsidianctl
 	@printf "\n" >> obsidianctl
+	@cat ./modules/etc_ab.py >> obsidianctl
+	@printf "\n" >> obsidianctl
 	@cat ./main >> obsidianctl
 	@chmod +x obsidianctl
 	@echo "--> obsidianctl"
