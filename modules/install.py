@@ -1,6 +1,6 @@
 def handle_mkobsidiansfs(args):
     if shutil.which("mkobsidiansfs"):
-        os.system(f"mkobsidiansfs {args.system_sfs} system.sfs")
+        os.system(f"mkobsidiansfs {args.system_sfs} tmp_system.sfs")
     else:
         if shutil.which("git"):
             os.system(
