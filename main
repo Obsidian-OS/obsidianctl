@@ -10,6 +10,8 @@ def main():
         "status", help="Show current active slot and system info."
     )
     parser_status.set_defaults(func=handle_status)
+    parser_currentslot = subparsers.add_parser("get-current-slot", help="Show the current active slot.")
+    parser_currentslot.set_defaults(func=handle_currentslot)
     parser_install = subparsers.add_parser(
         "install", help="Partition device and install system image."
     )
