@@ -51,15 +51,11 @@ def handle_sync(args):
     try:
         run_command(f"mount {source_root_dev} {source_mount_point}")
         run_command(f"mount {target_root_dev} {target_mount_point}")
-        run_command(f"rsync -aHAX --inplace --delete --info=progress2 {source_mount_point}/ {target_mount_point}/")
+        run_command(f"rsync -aHAX --delete --info=progress2 {source_mount_point}/ {target_mount_point}/")
     finally:
         run_command(f"umount {source_mount_point}", check=False)
         run_command(f"umount {target_mount_point}", check=False)
-        run_command(f"rm -r {source_mount_point} {target_mount_point}", check=False)
-
-    print(f"Setting label of {target_root_dev} to {target_root_label}")
-    run_command(f"e2label {target_root_dev} {target_root_label}")
-
+        run_command(f"rmdir {source_mount_point} {target_mount_point}", check=False)
     print("Copying data from source ESP to target ESP...")
     source_esp_mount_point = "/mnt/obsidian_source_esp"
     target_esp_mount_point = "/mnt/obsidian_target_esp"
@@ -67,15 +63,11 @@ def handle_sync(args):
     try:
         run_command(f"mount {source_esp_dev} {source_esp_mount_point}")
         run_command(f"mount {target_esp_dev} {target_esp_mount_point}")
-        run_command(f"rsync -aHAX --inplace --delete --info=progress2 {source_esp_mount_point}/ {target_esp_mount_point}/")
+        run_command(f"rsync -a --delete --info=progress2 {source_esp_mount_point}/ {target_esp_mount_point}/")
     finally:
         run_command(f"umount {source_esp_mount_point}", check=False)
         run_command(f"umount {target_esp_mount_point}", check=False)
-        run_command(f"rm -r {source_esp_mount_point} {target_esp_mount_point}", check=False)
-
-    print(f"Setting label of {target_esp_dev} to {target_esp_label}")
-    run_command(f"fatlabel {target_esp_dev} {target_esp_label}")
-
+        run_command(f"rmdir {source_esp_mount_point} {target_esp_mount_point}", check=False)
     if is_grub_active():
         print(f"Updating GRUB configuration for slot '{target_slot}'...")
         grub_mount_dir = f"/mnt/obsidian_grub_sync_{target_slot}"
@@ -83,7 +75,9 @@ def handle_sync(args):
         try:
             run_command(f"mount {target_root_dev} {grub_mount_dir}")
             run_command(f"mount {target_esp_dev} {grub_mount_dir}{EFI_DIR}")
-            run_command(f"mount --bind /etc {grub_mount_dir}/etc")
+            run_command(f"mount --bind /dev {grub_mount_dir}/dev")
+            run_command(f"mount --bind /proc {grub_mount_dir}/proc")
+            run_command(f"mount --bind /sys {grub_mount_dir}/sys")
             run_command(f"arch-chroot {grub_mount_dir} grub-mkconfig -o {EFI_DIR}/grub/grub.cfg")
         finally:
             run_command(f"umount -R {grub_mount_dir}", check=False)
