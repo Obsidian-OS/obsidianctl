@@ -16,16 +16,19 @@ else:
 
 MIGRATION_LOG_FILE = "/etc/obsidianctl/migrations/applied.log"
 
+
 def get_applied_migrations():
     if not os.path.exists(MIGRATION_LOG_FILE):
         return []
     with open(MIGRATION_LOG_FILE, "r") as f:
         return [line.strip() for line in f if line.strip()]
 
+
 def record_applied_migration(migration_id):
     os.makedirs(os.path.dirname(MIGRATION_LOG_FILE), exist_ok=True)
     with open(MIGRATION_LOG_FILE, "a") as f:
         f.write(f"{migration_id}\n")
+
 
 def remove_applied_migration(migration_id):
     if not os.path.exists(MIGRATION_LOG_FILE):
@@ -36,8 +39,13 @@ def remove_applied_migration(migration_id):
             if mid != str(migration_id):
                 f.write(f"{mid}\n")
 
+
 def is_grub_available():
-    return shutil.which("grub-install") is not None or shutil.which("grub2-install") is not None
+    return (
+        shutil.which("grub-install") is not None
+        or shutil.which("grub2-install") is not None
+    )
+
 
 def is_grub_active():
     if os.path.exists(f"{EFI_DIR}/grub/grub.cfg"):
@@ -50,14 +58,18 @@ def is_grub_active():
         pass
     return False
 
+
 def is_systemd_boot():
     try:
-        output = subprocess.check_output(["bootctl", "status"], stderr=subprocess.DEVNULL, text=True)
+        output = subprocess.check_output(
+            ["bootctl", "status"], stderr=subprocess.DEVNULL, text=True
+        )
         if "systemd-boot" in output or "Boot Loader:" in output:
             return True
         return False
     except (FileNotFoundError, subprocess.CalledProcessError):
         return False
+
 
 def lordo(
     label, disk=None
@@ -120,6 +132,7 @@ def run_command(command, **kwargs):
         print(f"Error: Command not found for: {command}", file=sys.stderr)
         sys.exit(1)
 
+
 def _get_part_path(device, part_num):
     if "nvme" in device:
         return f"{device}p{part_num}"
@@ -140,7 +153,7 @@ def get_current_slot_systemd():
     return "unknown"
 
 
-#def get_current_slot():
+# def get_current_slot():
 #    if is_systemd_boot():
 #        return get_current_slot_systemd()
 #    elif is_grub_active():
@@ -173,7 +186,9 @@ def get_current_slot():
     try:
         result = subprocess.run(
             ["findmnt", "-n", "-o", "SOURCE,UUID,PARTUUID,LABEL,PARTLABEL", "/"],
-            capture_output=True, text=True, check=True
+            capture_output=True,
+            text=True,
+            check=True,
         )
         for item in result.stdout.split():
             if "_a" in item:
@@ -183,16 +198,25 @@ def get_current_slot():
     except subprocess.CalledProcessError:
         pass
     return "unknown"
+
+
+def handle_currentslot(ignoreitman):
+    print(get_current_slot())
+
+
 def get_user_home_dir():
-    if 'SUDO_USER' in os.environ:
+    if "SUDO_USER" in os.environ:
         try:
-            user = os.environ['SUDO_USER']
+            user = os.environ["SUDO_USER"]
             return pwd.getpwnam(user).pw_dir
         except KeyError:
             pass
     return os.path.expanduser("~")
 
+
 def get_primary_disk_device():
     root_part = run_command("findmnt -no SOURCE /", capture_output=True).stdout.strip()
-    disk_name = run_command(f"lsblk -no PKNAME {root_part}", capture_output=True).stdout.strip()
+    disk_name = run_command(
+        f"lsblk -no PKNAME {root_part}", capture_output=True
+    ).stdout.strip()
     return f"/dev/{disk_name}"
