@@ -85,7 +85,7 @@ def handle_sync(args):
             run_command(f"mount --bind /proc {grub_mount_dir}/proc")
             run_command(f"mount --bind /sys {grub_mount_dir}/sys")
             run_command(
-                f"arch-chroot {grub_mount_dir} grub-mkconfig -o {EFI_DIR}/grub/grub.cfg"
+                f"arch-chroot {grub_mount_dir} grub-mkconfig -o /boot/grub/grub.cfg"
             )
         finally:
             run_command(f"umount -R {grub_mount_dir}", check=False)

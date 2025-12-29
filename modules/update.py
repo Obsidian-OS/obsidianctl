@@ -101,7 +101,7 @@ LABEL=home_ab /home  {fstype}  defaults,noatime 0 2
             try:
                 run_command(f"mount /dev/disk/by-label/{target_label} {grub_mount_dir}")
                 run_command(f"mount /dev/disk/by-label/{esp_label} {grub_mount_dir}{EFI_DIR}")
-                run_command(f"arch-chroot {grub_mount_dir} grub-mkconfig -o {EFI_DIR}/grub/grub.cfg")
+                run_command(f"arch-chroot {grub_mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
             finally:
                 run_command(f"umount -R {grub_mount_dir}", check=False)
                 run_command(f"rm -r {grub_mount_dir}", check=False)
