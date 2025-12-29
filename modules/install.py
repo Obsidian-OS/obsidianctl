@@ -248,13 +248,13 @@ label: gpt
             run_command(f"arch-chroot {mount_dir} sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
             run_command(f"umount {mount_dir}/efi")
             run_command(f"mkdir {mount_dir}/efi/grub/ -p")
-            run_command(f"arch-chroot {mount_dir} grub2-mkconfig -o /efi/grub/grub.cfg")
+            run_command(f"arch-chroot {mount_dir} grub2-mkconfig -o /boot/grub/grub.cfg")
         else:
             run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotA")
             run_command(f"arch-chroot {mount_dir} sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
             run_command(f"umount {mount_dir}/efi")
-            run_command(f"mkdir {mount_dir}/efi/grub/ -p")
-            run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /efi/grub/grub.cfg")
+            run_command(f"mkdir {mount_dir}/boot/grub/ -p")
+            run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
         mount_commands = [
             f"mount {lordo('root_b', device)} {mount_dir}/",
@@ -266,17 +266,16 @@ label: gpt
         for cmd in mount_commands:
             run_command(cmd)
         if args.use_grub2:
-            run_command(f"arch-chroot {mount_dir} grub2-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotA")
+            run_command(f"arch-chroot {mount_dir} grub2-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotB")
             run_command(f"umount {mount_dir}/efi")
             run_command(f"mkdir {mount_dir}/efi/grub/ -p")
-            run_command(f"arch-chroot {mount_dir} grub2-mkconfig -o /efi/grub/grub.cfg")
+            run_command(f"arch-chroot {mount_dir} grub2-mkconfig -o /boot/grub/grub.cfg")
         else:
-            run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotA")
+            run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotB")
             run_command(f"umount {mount_dir}/efi")
             run_command(f"mkdir {mount_dir}/efi/grub/ -p")
-            run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /efi/grub/grub.cfg")
+            run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
         run_command(f"mkdir {mount_dir}/boot/grub/ -p")
-        run_command(f"arch-chroot {mount_dir} ln -sf /efi/grub/grub.cfg /boot/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
     else:
         print("Installing systemd-boot to ESP_A...")
