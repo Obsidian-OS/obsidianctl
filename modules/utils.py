@@ -134,7 +134,7 @@ def run_command(command, **kwargs):
 
 
 def _get_part_path(device, part_num):
-    if "nvme" in device:
+    if "nvme" in device or "mmc" in device:
         return f"{device}p{part_num}"
     else:
         return f"{device}{part_num}"
