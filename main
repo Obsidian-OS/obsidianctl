@@ -79,6 +79,11 @@ def main():
     )
     parser_health.set_defaults(func=handle_health_check)
     
+    parser_secureboot = subparsers.add_parser(
+        "secureboot", help="Setup and manage Secure Boot."
+    )
+    parser_secureboot.set_defaults(func=enable_secureboot)
+    
     parser_verify = subparsers.add_parser(
         "verify-integrity", help="Verify the integrity of a specific slot."
     )
