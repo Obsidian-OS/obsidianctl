@@ -193,6 +193,11 @@ label: gpt
         run_command(f"arch-chroot {mount_dir}", check=False)
         print("Exited chroot.")
 
+    if args.secure_boot:
+        print("Setting up Secure Boot...")
+        run_command(f"arch-chroot {mount_dir} sbctl create-keys || true")
+        run_command(f"arch-chroot {mount_dir} sbctl sign-all || true")
+
     print("Unmounting slot 'a' partitions before copy...")
     run_command(f"umount -R {mount_dir}")
     print("Copying system to slot 'b'...")
