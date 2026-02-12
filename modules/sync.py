@@ -9,6 +9,7 @@ def handle_sync(args):
             "lsblk",
             "e2label",
             "fatlabel",
+            "arch-chroot",
         ]
     )
     checkroot()
