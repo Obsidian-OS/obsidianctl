@@ -1,19 +1,90 @@
+def _detect_chroot_cmd():
+    """
+    Detect the appropriate chroot command for the running distro.
+    - Arch Linux and derivatives: use arch-chroot (handles bind mounts automatically)
+    - Gentoo and other distros: use a plain chroot with manual bind mounts
+    Returns a callable: do_chroot(mount_dir, *extra_args, check=True)
+    """
+    import shutil, subprocess
+
+    def _read_os_release():
+        vals = {}
+        for path in ("/etc/os-release", "/usr/lib/os-release"):
+            try:
+                with open(path) as f:
+                    for line in f:
+                        line = line.strip()
+                        if "=" in line and not line.startswith("#"):
+                            k, _, v = line.partition("=")
+                            vals[k.strip()] = v.strip().strip('"')
+            except FileNotFoundError:
+                continue
+        return vals
+
+    os_release = _read_os_release()
+    distro_id = os_release.get("ID", "").lower()
+    distro_id_like = os_release.get("ID_LIKE", "").lower()
+
+    # Arch and anything derived from it (Manjaro, EndeavourOS, etc.)
+    is_arch_like = "arch" in distro_id or "arch" in distro_id_like
+
+    if is_arch_like and shutil.which("arch-chroot"):
+        def do_chroot(mount_dir, *extra_args, check=True):
+            cmd = f"arch-chroot {mount_dir}"
+            if extra_args:
+                cmd += " " + " ".join(extra_args)
+            run_command(cmd, check=check)
+        return do_chroot
+    else:
+        # Generic chroot: manually bind-mount proc/sys/dev, run command, unmount
+        def do_chroot(mount_dir, *extra_args, check=True):
+            import subprocess
+            mounts = [
+                f"mount -t proc /proc {mount_dir}/proc",
+                f"mount --rbind /sys {mount_dir}/sys",
+                f"mount --make-rslave {mount_dir}/sys",
+                f"mount --rbind /dev {mount_dir}/dev",
+                f"mount --make-rslave {mount_dir}/dev",
+            ]
+            for m in mounts:
+                run_command(m, check=False)
+            cmd = f"chroot {mount_dir}"
+            if extra_args:
+                cmd += " " + " ".join(extra_args)
+            run_command(cmd, check=check)
+            run_command(f"umount -R {mount_dir}/proc {mount_dir}/sys {mount_dir}/dev", check=False)
+        return do_chroot
+
+# Detect once at module load time so all handle_* functions share the same instance
+_chroot = _detect_chroot_cmd()
+
+
 def handle_mkobsidiansfs(args):
-    if shutil.which("mkobsidiansfs"):
-        os.system(f"mkobsidiansfs {args.system_sfs} tmp_system.sfs")
+    _, ext = os.path.splitext(args.system_sfs)
+    is_gentoo = ext == ".mkobsfs-gentoo"
+    script_name = "mkobsidiansfs-gentoo" if is_gentoo else "mkobsidiansfs"
+    repo_url = "https://github.com/Obsidian-OS/mkobsidiansfs/"
+    tmp_dir = "/tmp/mkobsidiansfs"
+    tmp_script = f"{tmp_dir}/{script_name}"
+
+    out_sfs = "/tmp/tmp_system.sfs" if is_gentoo else "tmp_system.sfs"
+    if shutil.which(script_name):
+        os.system(f"{script_name} {args.system_sfs} {out_sfs}")
     else:
         if shutil.which("git"):
             os.system(
-                f"git clone https://github.com/Obsidian-OS/mkobsidiansfs/ /tmp/mkobsidiansfs;chmod u+x /tmp/mkobsidiansfs/mkobsidiansfs;/tmp/mkobsidiansfs/mkobsidiansfs {args.system_sfs} tmp_system.sfs"
+                f"git clone {repo_url} {tmp_dir};"
+                f"chmod u+x {tmp_script};"
+                f"{tmp_script} {args.system_sfs} {out_sfs}"
             )
         else:
             print(
                 "No git or mkobsidiansfs found. Please install one of these to directly pass in an .mkobsfs."
             )
             sys.exit(1)
-    args.system_sfs = "tmp_system.sfs"
+    args.system_sfs = out_sfs
     handle_install(args)
-    os.remove("tmp_system.sfs")
+    os.remove(out_sfs)
 
 
 def handle_install(args):
@@ -21,7 +92,7 @@ def handle_install(args):
     device = args.device
     system_sfs = args.system_sfs or "/etc/system.sfs"
     _, ext = os.path.splitext(system_sfs)
-    if ext == ".mkobsfs":
+    if ext in (".mkobsfs", ".mkobsfs-gentoo"):
         handle_mkobsidiansfs(args)
         sys.exit()
     if args.dual_boot:
@@ -179,7 +250,7 @@ label: gpt
         print(
             f"Warning: ObsidianOS Logo file wasn't found. Skipping.",
             file=sys.stderr,
-        ) 
+        )
     print("\nSlot 'a' is now configured and mounted.")
     chroot_confirm = input(
         "Do you want to chroot into slot 'a' to make changes before copying it to slot B? (y/N): "
@@ -190,13 +261,13 @@ label: gpt
             "Common tasks: passwd, ln -sf /usr/share/zoneinfo/Region/City /etc/localtime, useradd"
         )
         print("Type 'exit' or press Ctrl+D when you are finished.")
-        run_command(f"arch-chroot {mount_dir}", check=False)
+        _chroot(mount_dir, check=False)
         print("Exited chroot.")
 
     if args.secure_boot:
         print("Setting up Secure Boot...")
-        run_command(f"arch-chroot {mount_dir} sbctl create-keys || true")
-        run_command(f"arch-chroot {mount_dir} sbctl sign-all || true")
+        _chroot(mount_dir, "sbctl create-keys || true", check=False)
+        _chroot(mount_dir, "sbctl sign-all || true", check=False)
 
     print("Unmounting slot 'a' partitions before copy...")
     run_command(f"umount -R {mount_dir}")
@@ -249,17 +320,17 @@ label: gpt
         for cmd in mount_commands:
             run_command(cmd)
         if args.use_grub2:
-            run_command(f"arch-chroot {mount_dir} grub2-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotA")
-            run_command(f"arch-chroot {mount_dir} sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
+            _chroot(mount_dir, "grub2-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotA")
+            _chroot(mount_dir, "sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
             run_command(f"umount {mount_dir}/efi")
             run_command(f"mkdir {mount_dir}/efi/grub/ -p")
-            run_command(f"arch-chroot {mount_dir} grub2-mkconfig -o /boot/grub/grub.cfg")
+            _chroot(mount_dir, "grub2-mkconfig -o /boot/grub/grub.cfg")
         else:
-            run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotA")
-            run_command(f"arch-chroot {mount_dir} sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
+            _chroot(mount_dir, "grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotA")
+            _chroot(mount_dir, "sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
             run_command(f"umount {mount_dir}/efi")
             run_command(f"mkdir {mount_dir}/boot/grub/ -p")
-            run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
+            _chroot(mount_dir, "grub-mkconfig -o /boot/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
         mount_commands = [
             f"mount {lordo('root_b', device)} {mount_dir}/",
@@ -271,15 +342,15 @@ label: gpt
         for cmd in mount_commands:
             run_command(cmd)
         if args.use_grub2:
-            run_command(f"arch-chroot {mount_dir} grub2-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotB")
+            _chroot(mount_dir, "grub2-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotB")
             run_command(f"umount {mount_dir}/efi")
             run_command(f"mkdir {mount_dir}/efi/grub/ -p")
-            run_command(f"arch-chroot {mount_dir} grub2-mkconfig -o /boot/grub/grub.cfg")
+            _chroot(mount_dir, "grub2-mkconfig -o /boot/grub/grub.cfg")
         else:
-            run_command(f"arch-chroot {mount_dir} grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotB")
+            _chroot(mount_dir, "grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotB")
             run_command(f"umount {mount_dir}/efi")
             run_command(f"mkdir {mount_dir}/efi/grub/ -p")
-            run_command(f"arch-chroot {mount_dir} grub-mkconfig -o /boot/grub/grub.cfg")
+            _chroot(mount_dir, "grub-mkconfig -o /boot/grub/grub.cfg")
         run_command(f"mkdir {mount_dir}/boot/grub/ -p")
         run_command(f"umount -R {mount_dir}")
     else:
