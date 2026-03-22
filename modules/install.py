@@ -340,13 +340,6 @@ label: gpt
             run_command(f"mkdir {mount_dir}/efi/grub/ -p")
             _chroot(mount_dir, "grub2-mkconfig -o /boot/grub/grub.cfg")
         else:
-<<<<<<< HEAD
-            _chroot(mount_dir, "grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotA")
-            _chroot(mount_dir, "sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
-            run_command(f"umount {mount_dir}/efi")
-            run_command(f"mkdir {mount_dir}/boot/grub/ -p")
-            _chroot(mount_dir, "grub-mkconfig -o /boot/grub/grub.cfg")
-=======
             _chroot(mount_dir, "grub-install --target=x86_64-efi --efi-directory=/efi --boot-directory=/efi --bootloader-id=ObsidianOSslotA")
             _chroot(mount_dir, "sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
             # Detect OpenRC and set init=/sbin/openrc-init in kernel cmdline
@@ -361,7 +354,6 @@ label: gpt
             _chroot(mount_dir, "grub-mkconfig -o /efi/grub/grub.cfg")
             run_command(f"umount {mount_dir}/boot")
             run_command(f"umount {mount_dir}/efi")
->>>>>>> 03676ec (added openrc support)
         run_command(f"umount -R {mount_dir}")
         mount_commands = [
             f"mount {lordo('root_b', device)} {mount_dir}/",
@@ -373,22 +365,11 @@ label: gpt
         for cmd in mount_commands:
             run_command(cmd)
         if args.use_grub2:
-<<<<<<< HEAD
-            _chroot(mount_dir, "grub2-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotB")
-=======
             _chroot(mount_dir, "grub2-install --target=x86_64-efi --efi-directory=/efi --boot-directory=/efi --bootloader-id=ObsidianOSslotB")
->>>>>>> 03676ec (added openrc support)
             run_command(f"umount {mount_dir}/efi")
             run_command(f"mkdir {mount_dir}/efi/grub/ -p")
             _chroot(mount_dir, "grub2-mkconfig -o /boot/grub/grub.cfg")
         else:
-<<<<<<< HEAD
-            _chroot(mount_dir, "grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotB")
-            run_command(f"umount {mount_dir}/efi")
-            run_command(f"mkdir {mount_dir}/efi/grub/ -p")
-            _chroot(mount_dir, "grub-mkconfig -o /boot/grub/grub.cfg")
-        run_command(f"mkdir {mount_dir}/boot/grub/ -p")
-=======
             _chroot(mount_dir, "grub-install --target=x86_64-efi --efi-directory=/efi --boot-directory=/efi --bootloader-id=ObsidianOSslotB")
             # Detect OpenRC and set init=/sbin/openrc-init in kernel cmdline
             import os as _os
@@ -402,7 +383,6 @@ label: gpt
             _chroot(mount_dir, "grub-mkconfig -o /efi/grub/grub.cfg")
             run_command(f"umount {mount_dir}/boot")
             run_command(f"umount {mount_dir}/efi")
->>>>>>> 03676ec (added openrc support)
         run_command(f"umount -R {mount_dir}")
     else:
         print("Installing systemd-boot to ESP_A...")
