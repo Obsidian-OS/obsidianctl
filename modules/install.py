@@ -1,10 +1,4 @@
 def _detect_chroot_cmd():
-    """
-    Detect the appropriate chroot command for the running distro.
-    - Arch Linux and derivatives: use arch-chroot (handles bind mounts automatically)
-    - Gentoo and other distros: use a plain chroot with manual bind mounts
-    Returns a callable: do_chroot(mount_dir, *extra_args, check=True)
-    """
     import shutil, subprocess
 
     def _read_os_release():
@@ -166,8 +160,7 @@ label: gpt
     run_command(f"unsquashfs -f -d {mount_dir} -no-xattrs {system_sfs}")
     print("Generating fstab for slot 'a'...")
     # On OpenRC, /run is cleared at boot so /run/etc_ab needs to be created
-    # before localmount processes fstab. Use a native OpenRC init script in
-    # the sysinit runlevel which runs before localmount (no systemd packages needed).
+    # before localmount processes fstab. 
     import os as _os
     _is_openrc = _os.path.exists(f"{mount_dir}/sbin/openrc-init")
     if _is_openrc:
