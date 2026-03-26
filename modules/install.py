@@ -152,6 +152,10 @@ label: gpt
     for cmd in format_commands:
         run_command(cmd)
 
+    # Wait for partitions to settle after formatting
+    run_command("partprobe", check=False)
+    run_command("udevadm settle")
+
     mount_dir = "/mnt/obsidian_install"
     run_command(f"mkdir -p {mount_dir}")
     print("Mounting root partition for slot 'a'...")
