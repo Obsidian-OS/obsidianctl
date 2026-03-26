@@ -152,7 +152,7 @@ label: gpt
     for cmd in format_commands:
         run_command(cmd)
 
-    # Wait for partitions to settle after formatting (Fix for I/O errors)
+    # Wait for partitions to settle after formatting
     run_command("partprobe", check=False)
     run_command("udevadm settle")
 
