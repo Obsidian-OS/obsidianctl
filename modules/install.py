@@ -178,7 +178,7 @@ label: gpt
             _os.symlink("/etc/init.d/obsidian-mkmountpoints", _dst)
     fstab_content_a = f"""
 {lordo('root_a', device)}  /      {fstype}  defaults,noatime 0 1
-{lordo('ESP_A', device)}     /efi  vfat  defaults,noatime 0 2
+{lordo('ESP_A', device)}   /efi  vfat  defaults,noatime 0 2
 {lordo('etc_ab', device)}  /run/etc_ab   {fstype}  defaults,noatime 0 2
 {lordo('var_ab', device)}  /var   {fstype}  defaults,noatime 0 2
 {lordo('home_ab', device)} /home  {fstype}  defaults,noatime 0 2
@@ -308,7 +308,7 @@ label: gpt
         with open(fstab_b_path, "w") as f:
             f.write(f"""
 {lordo('root_b', device)}  /      {fstype}  defaults,noatime 0 1
-{lordo('ESP_B', device)}     /efi  vfat  defaults,noatime 0 2
+{lordo('ESP_B', device)}   /efi  vfat  defaults,noatime 0 2
 {lordo('etc_ab', device)}  /run/etc_ab   {fstype}  defaults,noatime 0 2
 {lordo('var_ab', device)}  /var   {fstype}  defaults,noatime 0 2
 {lordo('home_ab', device)} /home  {fstype}  defaults,noatime 0 2
@@ -337,20 +337,16 @@ label: gpt
             run_command(f"mkdir {mount_dir}/efi/grub/ -p")
             _chroot(mount_dir, "grub2-mkconfig -o /boot/grub/grub.cfg")
         else:
-            _chroot(mount_dir, "grub-install --target=x86_64-efi --efi-directory=/efi =/efi --bootloader-id=ObsidianOSslotA")
+            _chroot(mount_dir, "grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotA")
             _chroot(mount_dir, "sed -i 's|^#*GRUB_DISABLE_OS_PROBER=.*|GRUB_DISABLE_OS_PROBER=false|' /etc/default/grub")
             # Detect OpenRC and set init=/sbin/openrc-init in kernel cmdline
             import os as _os
             _is_openrc = _os.path.exists(f"{mount_dir}/sbin/openrc-init")
             if _is_openrc:
                 run_command(f"sed -i 's|^#*GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"init=/sbin/openrc-init\"|' {mount_dir}/etc/default/grub")
-            # Bind-mount ESP to /boot so grub-mkconfig can find the kernel
-            run_command(f"mkdir -p {mount_dir}/boot")
-            run_command(f"mount --bind {mount_dir}/efi {mount_dir}/boot")
-            run_command(f"mkdir -p {mount_dir}/efi/grub")
-            _chroot(mount_dir, "grub-mkconfig -o /efi/grub/grub.cfg")
-            run_command(f"umount {mount_dir}/boot")
             run_command(f"umount {mount_dir}/efi")
+            run_command(f"mkdir -p {mount_dir}/boot/grub")
+            _chroot(mount_dir, "grub-mkconfig -o /boot/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
         mount_commands = [
             f"mount {lordo('root_b', device)} {mount_dir}/",
@@ -362,24 +358,20 @@ label: gpt
         for cmd in mount_commands:
             run_command(cmd)
         if args.use_grub2:
-            _chroot(mount_dir, "grub2-install --target=x86_64-efi --efi-directory=/efi --boot-directory=/boot --bootloader-id=ObsidianOSslotB")
+            _chroot(mount_dir, "grub2-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotB")
             run_command(f"umount {mount_dir}/efi")
             run_command(f"mkdir {mount_dir}/efi/grub/ -p")
             _chroot(mount_dir, "grub2-mkconfig -o /boot/grub/grub.cfg")
         else:
-            _chroot(mount_dir, "grub-install --target=x86_64-efi --efi-directory=/efi --boot-directory=/boot --bootloader-id=ObsidianOSslotB")
+            _chroot(mount_dir, "grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslotB")
             # Detect OpenRC and set init=/sbin/openrc-init in kernel cmdline
             import os as _os
             _is_openrc = _os.path.exists(f"{mount_dir}/sbin/openrc-init")
             if _is_openrc:
                 run_command(f"sed -i 's|^#*GRUB_CMDLINE_LINUX_DEFAULT=.*|GRUB_CMDLINE_LINUX_DEFAULT=\"init=/sbin/openrc-init\"|' {mount_dir}/etc/default/grub")
-            # Bind-mount ESP to /boot so grub-mkconfig can find the kernel
-            run_command(f"mkdir -p {mount_dir}/boot")
-            run_command(f"mount --bind {mount_dir}/efi {mount_dir}/boot")
-            run_command(f"mkdir -p {mount_dir}/efi/grub")
-            _chroot(mount_dir, "grub-mkconfig -o /efi/grub/grub.cfg")
-            run_command(f"umount {mount_dir}/boot")
             run_command(f"umount {mount_dir}/efi")
+            run_command(f"mkdir -p {mount_dir}/boot/grub")
+            _chroot(mount_dir, "grub-mkconfig -o /boot/grub/grub.cfg")
         run_command(f"umount -R {mount_dir}")
     else:
         print("Installing systemd-boot to ESP_A...")
