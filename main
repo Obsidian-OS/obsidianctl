@@ -26,7 +26,7 @@ def main():
     parser_install.add_argument("--dual-boot", action="store_true", help="Setup a dual-boot configuration. (EXPERIMENTAL. USE AT YOUR OWN RISK.)")
     parser_install.add_argument("--use-f2fs", action="store_true", help="Setup an f2fs configuration.")
     parser_install.add_argument("--use-grub", action="store_true", help="Setup an grub configuration. (Does not do anything, as grub is the default.)")
-    parser_install.add_argument("--use-systemdboot", action="store_true", help="Setup an (DEPRICATED) systemd-boot configuration.")
+    parser_install.add_argument("--use-systemdboot", action="store_true", help="Setup an (DEPRECATED) systemd-boot configuration.")
     parser_install.add_argument("--use-grub2", action="store_true", help="Setup an grub configuration, using grub2-install as some distros maintain both.")
     parser_install.add_argument("--secure-boot", action="store_true", help="Enable Secure Boot setup.")
     parser_install.set_defaults(func=handle_install) 
