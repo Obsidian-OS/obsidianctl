@@ -18,4 +18,4 @@ def handle_netupdate(iguessbro):
         f"bash -c \"curl -fSL $(cat /etc/is-pillar)/latest.erofs -o {sudohome}/.update.erofs\""
     )
     handle_update(argparse.Namespace(slot="a" if get_current_slot()=="b" else "b", system_sfs=f"{sudohome}/.update.erofs", is_pillar=True))
-    os.system(f"{sudohome}/.update.erofs")
+    os.system(f"rm -f {sudohome}/.update.erofs")
