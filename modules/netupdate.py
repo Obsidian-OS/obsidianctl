@@ -15,7 +15,7 @@ def handle_netupdate(iguessbro):
     print("Getting latest image...")
     sudohome = os.env("SUDO_HOME")
     os.system(
-        f"curl -fSL https://files.obsidianos.xyz/pillar/latest.erofs -o {sudohome}/.update.erofs"
+        f"bash -c \"curl -fSL $(cat /etc/is-pillar)/latest.erofs -o {sudohome}/.update.erofs\""
     )
     handle_update(argparse.Namespace(slot="a" if get_current_slot()=="b" else "b", system_sfs=f"{sudohome}/.update.erofs", is_pillar=True))
     os.system(f"{sudohome}/.update.erofs")
