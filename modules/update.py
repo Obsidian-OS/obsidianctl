@@ -2,6 +2,58 @@ import sys
 import os
 import shutil
 import subprocess
+import glob
+def handle_update_pillar(args):
+    checkroot()
+    slot = args.slot
+    system_sfs = args.system_sfs
+    target_label = f"root_{slot}"
+    esp_label = f"ESP_{slot.upper()}"
+    print(f"Updating slot '{slot}' with erofs image '{system_sfs}'...")
+    mount_dir = f"/mnt/obsidian_update_{slot}"
+    run_command(f"mkdir -p {mount_dir}")
+    try:
+        print(f"Mounting partition for slot '{slot}'...")
+        run_command(f"mount /dev/disk/by-label/{target_label} {mount_dir}")
+        print(f"Replacing system image as erofs.rootfs...")
+        run_command(f"rm -f {mount_dir}/erofs.rootfs")
+        run_command(f"cp {system_sfs} {mount_dir}/erofs.rootfs")
+        erofs_mount = f"/mnt/obsidian_erofs_{slot}"
+        run_command(f"mkdir -p {erofs_mount}")
+        try:
+            run_command(f"mount -t erofs -o loop {mount_dir}/erofs.rootfs {erofs_mount}")
+            print("Extracting kernel and initramfs...")
+            boot_files = sorted(glob.glob(f"{erofs_mount}/boot/vmlinuz*"))
+            if boot_files:
+                run_command(f"cp {boot_files[0]} {mount_dir}/vmlinuz")
+            initrd_files = sorted(glob.glob(f"{erofs_mount}/boot/initr*"))
+            if initrd_files:
+                run_command(f"cp {initrd_files[0]} {mount_dir}/initrd.img")
+        finally:
+            run_command(f"umount {erofs_mount}", check=False)
+            run_command(f"rmdir {erofs_mount}", check=False)
+        print(f"Populating ESP_{slot.upper()} with new boot files...")
+        esp_tmp_mount = "/mnt/obsidian_esp_tmp"
+        run_command(f"mkdir -p {esp_tmp_mount}")
+        try:
+            run_command(f"mount /dev/disk/by-label/{esp_label} {esp_tmp_mount}")
+            if os.path.exists(f"{mount_dir}/vmlinuz"):
+                run_command(f"cp {mount_dir}/vmlinuz {esp_tmp_mount}/vmlinuz-linux")
+            if os.path.exists(f"{mount_dir}/initrd.img"):
+                run_command(f"cp {mount_dir}/initrd.img {esp_tmp_mount}/initramfs-linux.img")
+        finally:
+            run_command(f"umount {esp_tmp_mount}", check=False)
+            run_command(f"rmdir {esp_tmp_mount}", check=False)
+    finally:
+        print("Unmounting partition...")
+        run_command(f"umount -R {mount_dir}", check=False)
+        run_command(f"rm -r {mount_dir}", check=False)
+    print(f"Update for slot '{slot}' complete!")
+    if args.switch:
+        print(f"Switching the active slot to {slot.upper()}")
+        run_command(f"obsidianctl switch {slot}", check=False)
+
+
 def handle_update_mkobsidiansfs(args):
     if shutil.which("mkobsidiansfs"):
         os.system(f"mkobsidiansfs {args.system_sfs} system.sfs")
@@ -44,6 +96,9 @@ def handle_update(args):
     _, ext = os.path.splitext(system_sfs)
     if ext == ".mkobsfs":
         handle_update_mkobsidiansfs(args)
+        sys.exit()
+    if ext == ".erofs":
+        handle_update_pillar(args)
         sys.exit()
     target_label = f"root_{slot}"
     esp_label = f"ESP_{slot.upper()}"

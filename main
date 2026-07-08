@@ -29,7 +29,7 @@ def main():
     parser_install.add_argument("--use-systemdboot", action="store_true", help="Setup an (DEPRECATED) systemd-boot configuration.")
     parser_install.add_argument("--use-grub2", action="store_true", help="Setup an grub configuration, using grub2-install as some distros maintain both.")
     parser_install.add_argument("--secure-boot", action="store_true", help="Enable Secure Boot setup.")
-    parser_install.set_defaults(func=handle_install) 
+    parser_install.set_defaults(func=handle_install)
     parser_switchonce = subparsers.add_parser(
       "switch-once", help="Switch active boot slot to 'a' or 'b' once only."
     )
@@ -79,7 +79,7 @@ def main():
         "health-check", help="Check the health of both A/B slots."
     )
     parser_health.set_defaults(func=handle_health_check)
-    
+
     parser_verify = subparsers.add_parser(
         "verify-integrity", help="Verify the integrity of a specific slot."
     )
@@ -100,8 +100,10 @@ def main():
     parser_update.add_argument(
         "--switch", action="store_true", help="Switch to the updated slot after updating."
     )
+    parser_update.add_argument(
+        "--is_pillar", action="store_true", help="Specify that the system image is for ObsidianOS Atomic."
+    )
     parser_update.set_defaults(func=handle_update)
-
     parser_sync = subparsers.add_parser(
         "sync", help="Sync one slot to another."
     )
@@ -130,13 +132,7 @@ def main():
     )
     parser_enter.set_defaults(func=handle_enter)
     parser_netupdate = subparsers.add_parser(
-        "netupdate", help="Update a slot with the latest system image."
-    )
-    parser_netupdate.add_argument(
-        "slot", choices=["a", "b"], help="The slot to update."
-    )
-    parser_netupdate.add_argument(
-        "--break-system", action="store_true", help="Forcibly update even if not using an default system.sfs."
+        "netupdate", help="Update the opposite slot with the latest system image."
     )
     parser_netupdate.set_defaults(func=handle_netupdate)
     ext_parser = subparsers.add_parser("ext", help="Manage ObsidianOS extensions.")
@@ -188,7 +184,7 @@ def main():
         "list", help="List applied migrations."
     )
     parser_migrate_list.set_defaults(func=handle_list_migrations)
-    
+
     parser_etc_ab = subparsers.add_parser(
         "share", help="Turn a file inside /etc from slot-specific to shared."
     )
