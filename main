@@ -29,6 +29,7 @@ def main():
     parser_install.add_argument("--use-systemdboot", action="store_true", help="Setup an (DEPRECATED) systemd-boot configuration.")
     parser_install.add_argument("--use-grub2", action="store_true", help="Setup an grub configuration, using grub2-install as some distros maintain both.")
     parser_install.add_argument("--secure-boot", action="store_true", help="Enable Secure Boot setup.")
+    parser_install.add_argument("--is-pillar", action="store_true", help="Specify installation type to be Project Pillar.")
     parser_install.set_defaults(func=handle_install)
     parser_switchonce = subparsers.add_parser(
       "switch-once", help="Switch active boot slot to 'a' or 'b' once only."
@@ -99,9 +100,6 @@ def main():
     )
     parser_update.add_argument(
         "--switch", action="store_true", help="Switch to the updated slot after updating."
-    )
-    parser_update.add_argument(
-        "--is_pillar", action="store_true", help="Specify that the system image is for ObsidianOS Atomic."
     )
     parser_update.set_defaults(func=handle_update)
     parser_sync = subparsers.add_parser(

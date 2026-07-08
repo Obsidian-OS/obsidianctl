@@ -1,3 +1,6 @@
+import glob
+
+
 def _detect_chroot_cmd():
     import shutil, subprocess
 
@@ -81,6 +84,147 @@ def handle_mkobsidiansfs(args):
     os.remove(out_sfs)
 
 
+def handle_install_pillar(args):
+    checkroot()
+    device = args.device
+    system_sfs = args.system_sfs
+    if not os.path.exists(device):
+        print(f"Error: Device '{device}' does not exist.", file=sys.stderr)
+        sys.exit(1)
+    if not os.path.exists(system_sfs):
+        print(f"Error: System image '{system_sfs}' not found.", file=sys.stderr)
+        sys.exit(1)
+    print(f"WARNING: This will destroy all data on {device}.")
+    confirm = input("Are you sure you want to proceed? (y/N): ")
+    if confirm.lower() != "y":
+        print("Installation aborted.")
+        sys.exit(0)
+    fstype = "ext4"
+    if args.use_f2fs:
+        fstype = "f2fs"
+    print("Partitioning device...")
+    partition_table = f"""
+label: gpt
+,{args.esp_size},U,*
+,{args.esp_size},U,*
+,{args.rootfs_size},L,*
+,{args.rootfs_size},L,*
+,{args.etc_size},L,*
+,{args.var_size},L,*
+,,L,*
+"""
+    run_command(f"sfdisk {device}", input=partition_table, text=True)
+    run_command("partprobe", check=False)
+    run_command("udevadm settle")
+    part1, part2, part3, part4, part5, part6, part7 = (
+        _get_part_path(device, 1),
+        _get_part_path(device, 2),
+        _get_part_path(device, 3),
+        _get_part_path(device, 4),
+        _get_part_path(device, 5),
+        _get_part_path(device, 6),
+        _get_part_path(device, 7),
+    )
+    print("Formatting partitions...")
+    for cmd in [
+        f"mkfs.fat -F32 -n ESP_A   {part1}",
+        f"mkfs.fat -F32 -n ESP_B   {part2}",
+        f"mkfs.{fstype} -F -L root_a  {part3}",
+        f"mkfs.{fstype} -F -L root_b  {part4}",
+        f"mkfs.{fstype} -F -L etc_ab  {part5}",
+        f"mkfs.{fstype} -F -L var_ab  {part6}",
+        f"mkfs.{fstype} -F -L home_ab {part7}",
+    ]:
+        run_command(cmd)
+    run_command("partprobe", check=False)
+    run_command("udevadm settle")
+    mount_dir = "/mnt/obsidian_install"
+    run_command(f"mkdir -p {mount_dir}")
+    run_command(f"mount {lordo('root_a', device)} {mount_dir}")
+    run_command(f"cp {system_sfs} {mount_dir}/erofs.rootfs")
+    erofs_mount = "/mnt/obsidian_erofs"
+    run_command(f"mkdir -p {erofs_mount}")
+    try:
+        run_command(f"mount -t erofs -o loop {mount_dir}/erofs.rootfs {erofs_mount}")
+        boot_files = sorted(glob.glob(f"{erofs_mount}/boot/vmlinuz*"))
+        if boot_files:
+            run_command(f"cp {boot_files[0]} {mount_dir}/vmlinuz")
+        initrd_files = sorted(glob.glob(f"{erofs_mount}/boot/initr*"))
+        if initrd_files:
+            run_command(f"cp {initrd_files[0]} {mount_dir}/initrd.img")
+        for part_label in ["etc_ab", "var_ab", "home_ab"]:
+            fs_dir = part_label.split("_")[0]
+            tmp = f"/mnt/tmp_{fs_dir}"
+            run_command(f"mkdir -p {tmp}")
+            try:
+                run_command(f"mount {lordo(part_label, device)} {tmp}")
+                run_command(f"rsync -aK --delete {erofs_mount}/{fs_dir}/ {tmp}/")
+            finally:
+                run_command(f"umount {tmp}", check=False)
+                run_command(f"rmdir {tmp}", check=False)
+    finally:
+        run_command(f"umount {erofs_mount}", check=False)
+        run_command(f"rmdir {erofs_mount}", check=False)
+    run_command(f"cp {mount_dir}/vmlinuz {mount_dir}/initrd.img /mnt/obsidian_esp_tmp/", check=False)
+    if not args.use_systemdboot:
+        _install_grub_pillar(args, device, fstype, mount_dir, part3, part4)
+    else:
+        _install_systemdboot_pillar(args, part1, part2, part3, part4)
+    run_command(f"umount -R {mount_dir}", check=False)
+    run_command(f"rm -r {mount_dir}", check=False)
+    print("Installation complete!")
+
+
+def _install_grub_pillar(args, device, fstype, mount_dir, part3, part4):
+    esp = f"/mnt/obsidianos-install-grub"
+    run_command(f"mkdir -p {esp}")
+    for slot, part, esp_label in [("a", part3, "ESP_A"), ("b", part4, "ESP_B")]:
+        run_command(f"mount {lordo(f'root_{slot}', device)} {esp}")
+        run_command(f"mount {lordo(esp_label, device)} {esp}/efi")
+        run_command(f"mount {lordo('etc_ab', device)} {esp}/run/etc_ab --mkdir")
+        run_command(f"mount {lordo('var_ab', device)} {esp}/var")
+        run_command(f"mount {lordo('home_ab', device)} {esp}/home")
+        if args.use_grub2:
+            _chroot(esp, f"grub2-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslot{slot.upper()}")
+        else:
+            _chroot(esp, f"grub-install --target=x86_64-efi --efi-directory=/efi --bootloader-id=ObsidianOSslot{slot.upper()}")
+        run_command(f"umount {esp}/efi")
+        run_command(f"mkdir -p {esp}/boot/grub")
+        _chroot(esp, "grub-mkconfig -o /boot/grub/grub.cfg")
+        run_command(f"umount -R {esp}")
+
+
+def _install_systemdboot_pillar(args, part1, part2, part3, part4):
+    for part, label in [(part1, "ESP_A"), (part2, "ESP_B")]:
+        esp = "/mnt/obsidian_esp"
+        run_command(f"mkdir -p {esp}")
+        try:
+            run_command(f"mount {part} {esp}")
+            run_command(f'bootctl --esp-path={esp} --efi-boot-option-description="ObsidianOS (Slot {"A" if "A" in label else "B"})" install')
+        finally:
+            run_command(f"umount {esp}", check=False)
+            run_command(f"rm -r {esp}", check=False)
+    root_a_partuuid = run_command(f"blkid -s PARTUUID -o value {part3}", capture_output=True, text=True).stdout.strip()
+    root_b_partuuid = run_command(f"blkid -s PARTUUID -o value {part4}", capture_output=True, text=True).stdout.strip()
+    if not root_a_partuuid or not root_b_partuuid:
+        print("Could not determine PARTUUIDs.", file=sys.stderr)
+        sys.exit(1)
+    for part, slot in [(part1, "a"), (part2, "b")]:
+        esp = "/mnt/obsidian_esp_cfg"
+        run_command(f"mkdir -p {esp}")
+        try:
+            run_command(f"mount {part} {esp}")
+            run_command(f"mkdir -p {esp}/loader/entries")
+            with open(f"{esp}/loader/loader.conf", "w") as f:
+                f.write("timeout 3\ndefault obsidian-a.conf\n")
+            for s, puuid in [("a", root_a_partuuid), ("b", root_b_partuuid)]:
+                with open(f"{esp}/loader/entries/obsidian-{s}.conf", "w") as f:
+                    f.write(f"title ObsidianOS (Slot {s.upper()})\nlinux /vmlinuz-linux\ninitrd /initramfs-linux.img\noptions root=PARTUUID={puuid} rw\n")
+        finally:
+            run_command(f"umount {esp}", check=False)
+            run_command(f"rm -r {esp}", check=False)
+
+
 def handle_install(args):
     checkroot()
     device = args.device
@@ -88,6 +232,9 @@ def handle_install(args):
     _, ext = os.path.splitext(system_sfs)
     if ext in (".mkobsfs", ".mkobsfs-gentoo"):
         handle_mkobsidiansfs(args)
+        sys.exit()
+    if getattr(args, "is_pillar", False):
+        handle_install_pillar(args)
         sys.exit()
     if args.dual_boot:
         handle_dual_boot(args)
