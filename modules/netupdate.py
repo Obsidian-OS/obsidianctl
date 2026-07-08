@@ -1,20 +1,21 @@
-def handle_netupdate(args):
+def handle_netupdate(iguessbro):
     checkroot()
-    if args.break_system or not os.path.exists(
-        "/etc/obsidianctl-netupdate-enable-DONOTDELETE"
-    ):
+    if not os.path.exists("/etc/is-pillar"):
         print(
-            "Error: Image not found to be default image. It is not reccomended to continue.",
-            file=sys.stderr,
-        )
-        print(
-            "If you would like to continue... REMOVING ALL NON DEFAULT PACKAGES AND USERS, add the --break-system flag.",
+            "Error: This system doesn't appear to be running ObsidianOS Atomic. Netupdate functionality is only supported on ObsidianOS Atomic.",
             file=sys.stderr,
         )
         sys.exit(1)
-    print("Starting image netupdate...")
+    print("Starting Netupdate...")
+    print("WARNING: This will download and apply a system update to the inactive slot.")
+    confirm = input("Continue? (y/N): ")
+    if confirm.lower() != "y":
+        print("Operation Canceled.")
+        exit(1)
     print("Getting latest image...")
+    sudohome = os.env("SUDO_HOME")
     os.system(
-        "curl https://github.com/Obsidian-OS/archiso/releases/download/latest/system.sfs -o /tmp/system.sfs"
+        f"curl -fSL https://files.obsidianos.xyz/pillar/latest.erofs -o {sudohome}/.update.erofs"
     )
-    handle_update(argparse.Namespace(slot=args.slot, system_sfs="/tmp/system.sfs"))
+    handle_update(argparse.Namespace(slot="a" if get_current_slot()=="b" else "b", system_sfs=f"{sudohome}/.update.erofs", is_pillar=True))
+    os.system(f"{sudohome}/.update.erofs")
